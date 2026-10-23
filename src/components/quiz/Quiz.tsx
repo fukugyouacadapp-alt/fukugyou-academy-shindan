@@ -37,7 +37,6 @@ const FOLLOWUP_SCREEN = SCREENS.length
 /** 結果画面の「強みの質問に戻って選び直す」で使う */
 export const STRENGTH_SCREEN = SCREENS.findIndex(s => s.step === 2)
 const SECONDS_PER_SCREEN = 15
-const AUTO_ADVANCE_MS = 220
 /** 深掘りの質問をこれ以上待たない（通信が止まっても画面から出られるように） */
 const FOLLOWUP_TIMEOUT_MS = 30_000
 
@@ -118,10 +117,6 @@ function QuizInner() {
   const [followUps, setFollowUps] = useState<FollowUp[] | null>(init.f)
   const [loadingFollowUps, setLoadingFollowUps] = useState(false)
   const [resumed, setResumed] = useState(init.resumed)
-  /** キーボードで選んだことがあるか。その人には自動で進まないので「選ぶと次へ進みます」を出さない */
-  const [usesKeyboard, setUsesKeyboard] = useState(false)
-  // 「選ぶと次へ」の予約。別の画面へ移ったら取り消す（古い画面番号のまま進んで画面がずれるのを防ぐ）
-  const advanceTimer = useRef<number | null>(null)
   // 深掘りの問い合わせの番号。戻る・スキップのたびに進めて、古い問い合わせの返事を捨てる
   const followUpRequest = useRef(0)
   // いま返事を待っている問い合わせの番号（0 は待っていない）。「次へ」の連打で二重に送らないため
@@ -133,7 +128,6 @@ function QuizInner() {
   const screenHeading = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => () => {
-    if (advanceTimer.current !== null) window.clearTimeout(advanceTimer.current)
     // 画面を離れたら深掘りの問い合わせも止める（あとから届いた返事で結果画面へ飛ばないように）
     followUpRequest.current += 1
     followUpAbort.current?.abort()
@@ -148,10 +142,6 @@ function QuizInner() {
   }, [init])
 
   function move(i: number) {
-    if (advanceTimer.current !== null) {
-      window.clearTimeout(advanceTimer.current)
-      advanceTimer.current = null
-    }
     setScreen(i)
     store.setScreen(i)
     window.scrollTo({ top: 0 })
@@ -275,11 +265,6 @@ function QuizInner() {
   const position = inFollowUp ? total : visible.indexOf(screen) + 1
   const minutesLeft = Math.max(1, Math.ceil(((total - position) * SECONDS_PER_SCREEN) / 60))
 
-  // 画面の設問がすべて「1つだけ選ぶ」なら、全部答えた時点で次へ進む（迷わず答えられる画面だけ）。
-  // 1 のように、選ぶと同じ画面に「具体的には？」が出る画面は、それを答えるまで進まない
-  const singleOnly = (qs: Question[]) => qs.length > 0 && qs.every(q => q.kind === 'choice' && q.max === 1)
-  const autoAdvance = singleOnly(questions)
-
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-36">
       <div className="sticky top-0 z-[var(--z-sticky)] -mx-4 bg-[var(--color-paper)] px-4 pb-3 pt-4">
@@ -356,10 +341,7 @@ function QuizInner() {
                     >
                       {q.title}
                     </h2>
-                    <p className="-mt-2 text-xs text-sub">
-                      {choiceHint(q.max, (answers[q.id] as string[] | undefined)?.length ?? 0)}
-                      {autoAdvance && !usesKeyboard && q !== Q.q1 && q === questions[questions.length - 1] && '。選ぶと次へ進みます'}
-                    </p>
+                    <p className="-mt-2 text-xs text-sub">{choiceHint(q.max, (answers[q.id] as string[] | undefined)?.length ?? 0)}</p>
                     {q.note && <p className="notice -mt-1 !py-2.5 text-xs">{q.note}</p>}
                     <ChoiceGroup
                       labelId={`${q.id}-label`}
@@ -367,23 +349,8 @@ function QuizInner() {
                       max={q.max}
                       noneId={q.noneId}
                       value={(answers[q.id] as string[] | undefined) ?? []}
-                      onChange={(v, byKeyboard) => {
-                        const next = update(q.id, v)
-                        // キーボードで選んだときは自動では進まない（矢印やTabで選び直す前に画面が変わって迷わないように。「次へ」で進む）
-                        if (byKeyboard) {
-                          setUsesKeyboard(true)
-                          return
-                        }
-                        // 選んだあとの答えで、この画面の設問（出たばかりの「具体的には？」も含む）が全部埋まったかを見る
-                        const after = SCREENS[screen].questions(next)
-                        if (singleOnly(after) && after.every(x => isAnswered(x, next))) {
-                          if (advanceTimer.current !== null) window.clearTimeout(advanceTimer.current)
-                          advanceTimer.current = window.setTimeout(() => {
-                            advanceTimer.current = null
-                            goNext(next)
-                          }, AUTO_ADVANCE_MS)
-                        }
-                      }}
+                      // 選んでも自動では進まない。選び直してから「次へ」で進む
+                      onChange={v => update(q.id, v)}
                     />
                   </section>
                 ) : null,

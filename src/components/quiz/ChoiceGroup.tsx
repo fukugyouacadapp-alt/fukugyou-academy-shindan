@@ -9,8 +9,7 @@ type Props = {
   max: number | null
   noneId?: string
   value: string[]
-  /** byKeyboard は Enter・スペースで押したとき true（キーボードのときは自動で次へ進めないため） */
-  onChange: (next: string[], byKeyboard: boolean) => void
+  onChange: (next: string[]) => void
 }
 
 /**
@@ -22,13 +21,13 @@ export function ChoiceGroup({ labelId, options, max, noneId, value, onChange }: 
   const single = max === 1
   const full = max !== null && !single && value.length >= max
 
-  function toggle(id: string, byKeyboard: boolean) {
-    if (single) return onChange([id], byKeyboard)
-    if (value.includes(id)) return onChange(value.filter(v => v !== id), byKeyboard)
-    if (id === noneId) return onChange([id], byKeyboard)
+  function toggle(id: string) {
+    if (single) return onChange([id])
+    if (value.includes(id)) return onChange(value.filter(v => v !== id))
+    if (id === noneId) return onChange([id])
     const withoutNone = value.filter(v => v !== noneId)
     if (max !== null && withoutNone.length >= max) return
-    onChange([...withoutNone, id], byKeyboard)
+    onChange([...withoutNone, id])
   }
 
   const button = (o: Option) => {
@@ -41,8 +40,7 @@ export function ChoiceGroup({ labelId, options, max, noneId, value, onChange }: 
         className="choice"
         aria-pressed={on}
         disabled={disabled}
-        // detail が 0 のクリックは、マウスや指ではなくキーボード（Enter・スペース）で押されたもの
-        onClick={e => toggle(o.id, e.detail === 0)}
+        onClick={() => toggle(o.id)}
       >
         {o.label}
       </button>
