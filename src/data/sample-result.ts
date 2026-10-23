@@ -2,7 +2,7 @@ import type { DiagnosisResult } from '@/lib/schemas'
 
 /**
  * 結果の見本（テスト用 Aさん：人事・採用の子育て中リーダー）。docs/02-ai-prompts.md「出力例」と同じ中身。
- * トップページの見本と、/result?sample=1 の表示に使う。
+ * /result?sample=1（結果の見本）の表示に使う。
  * 引用（「」の中）は、10問版の選択肢と、深掘りの答え（「面接・選考」「広報・お便りづくり」）の文言。
  */
 
