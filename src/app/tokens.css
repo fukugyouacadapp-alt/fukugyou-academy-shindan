@@ -1,0 +1,107 @@
+/* Hallmark · genre: modern-minimal · design-system: design.md · designed-as-app
+ * theme: studied-DNA (source: https://color-with.com/ · 2026-08-22 読み取り)
+ * observed: paper #ffffff · ink #333333 · accent #f46e00 · secondary #0a73bb · paper-2 #f1f2f2
+ * observed-fonts: Noto Sans JP（700 / 400）· radius 15 / 20 / 50px · 影なし · 動きは即時
+ * pre-emit critique: P4 H4 E4 S4 R4 V3
+ *
+ * 診断サイトの全画面で共有する「決めごと」。運営会社サイト（color-with.com）から読み取った値に合わせている。
+ * 画面側に #hex や生の font-family を書かないこと（ここに無い値が要るなら、まずここへ足す）。
+ * 「サイトに無かったので決めた値」には（派生）と書いてある。
+ */
+:root {
+  /* ── 地と文字（サイトの値） ── */
+  --color-paper:        #ffffff;   /* 画面の地 */
+  --color-surface:      #ffffff;   /* カード・入力欄 */
+  --color-paper-2:      #f1f2f2;   /* 押せる場所のホバー・くぼみ */
+  --color-paper-3:      #e6e7e7;   /* （派生） */
+  --color-rule:         #e3e4e4;   /* 罫線（派生） */
+  --color-rule-strong:  #cfd0d0;   /* （派生） */
+  --color-muted:        #6b6b6b;   /* 補足の文字（派生。白地で 5.5:1） */
+  --color-ink-2:        #333333;
+  --color-ink:          #333333;   /* 本文の文字 */
+  --color-ink-paper:    #ffffff;   /* 塗りの上に載せる文字 */
+
+  /* ── ブランドのオレンジ（サイトの値）。ボタン・印・進捗バー ── */
+  --color-accent:       #f46e00;
+  --color-accent-ink:   #c95a00;   /* 白地に小さく載せるオレンジの文字（派生。4.6:1） */
+  --color-accent-paper: #fff3ea;   /* （派生） */
+  --color-accent-rule:  #f9c39d;   /* （派生） */
+
+  /* ── 青（サイトの値）。リンク・完了・フォーカス ── */
+  --color-blue:         #0a73bb;
+  --color-blue-paper:   #eaf3fa;   /* （派生） */
+  --color-blue-rule:    #b7d5ea;   /* （派生） */
+  --color-focus:        #0a73bb;
+
+  /* ── 状態色。完了＝青、注意＝サイト定義の赤 ── */
+  --color-ok:           var(--color-blue);
+  --color-ok-paper:     var(--color-blue-paper);
+  --color-ok-rule:      var(--color-blue-rule);
+  --color-danger:       #cf2e2e;
+  --color-danger-paper: #fdf0f0;   /* （派生） */
+  --color-danger-rule:  #f3c2c2;   /* （派生） */
+
+  --color-scrim:        rgba(51, 51, 51, 0.5);
+  --shadow-whisper:     none;
+  --shadow-modal:       none;
+
+  /* ── 文字：サイトと同じ Noto Sans JP を見出しにも本文にも ── */
+  --font-display: var(--font-noto), "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-body:    var(--font-noto), "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-mono:    var(--font-noto), "Hiragino Sans", "Yu Gothic", sans-serif;  /* 数字は同じ書体で桁だけ揃える */
+
+  --text-xs:   0.8rem;
+  --text-sm:   0.9rem;
+  --text-base: 1rem;      /* 16px */
+  --text-md:   1.125rem;  /* 18px（ボタン） */
+  --text-lg:   1.5rem;    /* 24px */
+  --text-xl:   2rem;      /* 32px（h1） */
+  --text-2xl:  2.5rem;    /* 40px（h2 大） */
+
+  /* ── 余白（サイトの段階に寄せた 4pt 刻み） ── */
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2.5rem;
+  --space-2xl: 4rem;
+
+  /* ── 角丸（サイトの値）。ボタンはピル型、カードは大きめ ── */
+  --radius-sm:    15px;
+  --radius-md:    20px;
+  --radius-input: 15px;
+  --radius-pill:  50px;
+
+  /* ── 動き（サイトは即時。ほぼ動かさない） ── */
+  --ease-out:    ease;
+  --ease-in:     ease;
+  --ease-in-out: ease;
+  --dur-micro: 80ms;
+  --dur-short: 120ms;
+  --dur-long:  200ms;
+
+  --z-raised:   10;
+  --z-sticky:   200;
+  --z-modal:    400;
+}
+
+/* ── 診断サイトで足した値（派生）。教材スライド「潜在型/顕在型スキル」の配色に寄せた ── */
+:root {
+  /* 強みの3層。本業＝墨、顕在型＝オレンジ、潜在型＝青（スライドの左右の色分けに合わせる） */
+  --layer-hongyo-ink:    var(--color-ink);
+  --layer-hongyo-paper:  #ffffff;
+  --layer-hongyo-rule:   var(--color-rule-strong);
+  --layer-kenzai-ink:    var(--color-accent-ink);
+  --layer-kenzai-paper:  var(--color-accent-paper);
+  --layer-kenzai-rule:   var(--color-accent-rule);
+  --layer-senzai-ink:    var(--color-blue);
+  --layer-senzai-paper:  var(--color-blue-paper);
+  --layer-senzai-rule:   var(--color-blue-rule);
+
+  /* スライド下端の帯（オレンジ → 黄 → 青緑）。「可能性を拡げる」矢印と、ページ上端の細い帯にだけ使う */
+  --color-sun:           #f5b82e;
+  --color-teal:          #3a9fae;
+  --gradient-expand:     linear-gradient(90deg, var(--color-accent), var(--color-sun) 50%, var(--color-teal));
+  --gradient-arrow:      linear-gradient(0deg, var(--color-sun), var(--color-accent));
+}

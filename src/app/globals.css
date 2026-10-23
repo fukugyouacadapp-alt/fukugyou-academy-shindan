@@ -1,0 +1,291 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* 診断サイトの共通スタイル。色・文字・余白は tokens.css の名前で引く。
+ * 決めごと（運営会社サイト color-with.com に合わせたもの）：白地・墨文字・Noto Sans JP・ピル型ボタン・
+ * オレンジは「押すもの・印」にだけ・影なし・絵文字を使わない・ボタンの文言に矢印を付けない。
+ */
+
+/* 画面側の Tailwind で使う色の名前。tokens.css の名前と同じにすると自分自身を指して色が消えるので、別名にしている
+ * text-fg（墨）／text-sub（補足）／border-line（罫線）／bg-well（くぼみ）／brand（オレンジ）／link（青） */
+@theme inline {
+  --color-background: var(--color-paper);
+  --color-foreground: var(--color-ink);
+  --color-fg: var(--color-ink);
+  --color-sub: var(--color-muted);
+  --color-line: var(--color-rule);
+  --color-line-strong: var(--color-rule-strong);
+  --color-well: var(--color-paper-2);
+  --color-brand: var(--color-accent);
+  --color-brand-ink: var(--color-accent-ink);
+  --color-brand-paper: var(--color-accent-paper);
+  --color-brand-rule: var(--color-accent-rule);
+  --color-link: var(--color-blue);
+  --color-link-paper: var(--color-blue-paper);
+  --font-sans: var(--font-body);
+  /* 文字の大きさ。tokens.css にも同じ名前（--text-lg = 24px など、別の段階）があり、
+   * そのままだと text-lg / text-2xl が大きくなりすぎるので、画面側のクラス用にここで値を固定する */
+  --text-xs: 0.8rem;
+  --text-xs--line-height: 1.55;
+  --text-sm: 0.9rem;
+  --text-sm--line-height: 1.6;
+  --text-base: 1rem;
+  --text-base--line-height: 1.7;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.6;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.5;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.45;
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: 1.35;
+}
+
+html {
+  overflow-x: clip;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--text-base);
+  line-height: 1.7;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  line-height: 1.5;
+}
+
+/* 見出しは文節で折り返す（「仕事につ／ながる」のような途中での改行を避ける。対応ブラウザのみ） */
+h1, h2, h3 {
+  word-break: auto-phrase;
+  text-wrap: balance;
+}
+
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@layer components {
+  /* ── 箱：影を使わず、薄い罫線と角丸で区切る ── */
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-md);
+  }
+
+  /* ── ボタン：ピル型。主はオレンジ塗り、副は墨の罫線 ── */
+  .btn-primary,
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 48px;
+    border-radius: var(--radius-pill);
+    padding: 12px 28px;
+    font-size: var(--text-base);
+    line-height: 1.4;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out);
+  }
+  .btn-primary {
+    background: var(--color-accent);
+    color: var(--color-ink-paper);
+    border: 1px solid var(--color-accent);
+    font-weight: 700;
+  }
+  .btn-primary:hover {
+    background: var(--color-accent-ink);
+    border-color: var(--color-accent-ink);
+  }
+  .btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    border: 1px solid var(--color-ink);
+  }
+  .btn-secondary:hover {
+    background: var(--color-paper-2);
+  }
+  .btn-primary:active,
+  .btn-secondary:active {
+    transform: translateY(1px);
+  }
+  .btn-primary:disabled,
+  .btn-secondary:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn-text {
+    color: var(--color-blue);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    font-size: var(--text-sm);
+  }
+
+  /* ── 選択肢：押しやすい角丸の札。選ぶと塗られる ── */
+  .choice {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 9px 16px;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out);
+  }
+  .choice:hover:not(:disabled) {
+    border-color: var(--color-accent);
+  }
+  .choice[aria-pressed="true"],
+  .choice[aria-checked="true"] {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-ink-paper);
+    font-weight: 700;
+  }
+  .choice:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* ── ハッシュタグ：教材スライドと同じ「角丸の枠＋色文字」。層で色を分ける ── */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border: 1.5px solid var(--color-accent);
+    border-radius: 10px;
+    background: var(--color-surface);
+    color: var(--color-accent-ink);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .tag--hongyo {
+    border-color: var(--layer-hongyo-ink);
+    color: var(--layer-hongyo-ink);
+  }
+  .tag--kenzai {
+    border-color: var(--color-accent);
+    color: var(--layer-kenzai-ink);
+  }
+  .tag--senzai {
+    border-color: var(--color-blue);
+    color: var(--layer-senzai-ink);
+  }
+
+  /* 小さな札（層のバッジ・ラベル） */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-pill);
+    padding: 2px 10px;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    white-space: nowrap;
+    background: var(--color-paper-2);
+    color: var(--color-ink);
+  }
+  .badge--kenzai {
+    background: var(--layer-kenzai-paper);
+    color: var(--layer-kenzai-ink);
+  }
+  .badge--senzai {
+    background: var(--layer-senzai-paper);
+    color: var(--layer-senzai-ink);
+  }
+
+  /* 小見出しの上に置く小さな見出し語 */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--color-accent-ink);
+  }
+  .eyebrow::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--color-accent);
+  }
+
+  .section-title {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    letter-spacing: 0.045em;
+    line-height: 1.5;
+  }
+
+  /* ── 知らせ ── */
+  .notice {
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    font-size: var(--text-sm);
+    line-height: 1.7;
+    background: var(--color-paper-2);
+  }
+  .notice--wait {
+    background: var(--color-accent-paper);
+    border: 1px solid var(--color-accent-rule);
+  }
+  .notice--danger {
+    background: var(--color-danger-paper);
+    border: 1px solid var(--color-danger-rule);
+    color: var(--color-ink);
+  }
+
+  /* 引用（選んだ回答）を強調する。「」で囲まれた部分に使う */
+  .quote {
+    background: linear-gradient(transparent 62%, var(--color-accent-paper) 62%);
+    font-weight: 700;
+  }
+
+  /* ページ上端の細い帯（スライド下端の帯の色） */
+  .top-band {
+    height: 4px;
+    background: var(--gradient-expand);
+  }
+}
+
+/* 分析中の画面で、選んだ回答の言葉を入れ替えるときの動き */
+@keyframes fadeword {
+  0% { opacity: 0; transform: translateY(6px); }
+  20%, 80% { opacity: 1; transform: none; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
