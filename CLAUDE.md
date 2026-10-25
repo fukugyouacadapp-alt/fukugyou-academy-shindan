@@ -1,9 +1,10 @@
 @AGENTS.md
 
-# 複業ニッチ診断（shindan-site）
+# 複業診断（shindan-site）
 
-複業アカデミーの無料診断サイト。選択式の質問に答えると、AI（Gemini）が強みを #ハッシュタグ にし、ニッチな複業を5つ提案する。
-仕様は `docs/01-site-build-prompt.md`、AIへの指示文は `docs/02-ai-prompts.md`（`src/lib/prompts.ts` と同じ文面。直すときは両方）。
+複業アカデミーの無料診断サイト。選択式の質問に答えると、強みを #ハッシュタグ にし、ニッチな複業を3つ提案する。
+AIは使わない（2026-10-24 に Gemini をやめた）。用意した文面の部品（`src/data/catalog/`）を、回答に合わせてブラウザの中で組み立てる（`src/lib/diagnose.ts`）。
+仕様は `docs/01-site-build-prompt.md`、結果の組み立て方と文面の決まりは `docs/02-result-rules.md`（`src/data/catalog/types.ts` の決まりと同じ。直すときは両方）。
 
 ## ローカル起動ルール（必読）
 
@@ -15,28 +16,27 @@
 
 ## 必要な設定（`.env.local`）
 
-`.env.example` をコピーして作る。`GEMINI_API_KEY` が無いと診断のところで「混み合っています」になる（サーバーのログに `GEMINI_API_KEY が設定されていません`）。
+`.env.example` をコピーして作る。中身は申し込みボタンのリンク先（`NEXT_PUBLIC_CTA_URL`）など。APIキーは要らない（無くても診断は最後まで動く）。
 
 ## 確認のしかた
 
 - `npm run lint` と `npx tsc --noEmit`
-- `npm run test:personas`（開発サーバーを起動した状態で）: テスト用4人（`scripts/test-personas.mjs`）の回答でAIを実際に呼び、結果を `.persona-results/` に保存して、決まりごと（5件・顕在型3/潜在型2・引用・禁止語）を点検する。AIを数回呼ぶので料金が少しかかる
-- 画面は `/result?sample=1` で、AIを呼ばずに結果の見本を表示できる
+- `npm run check:results`（開発サーバーは要らない・料金もかからない）: 結果の部品（数・文字数・書き方・禁止語・回答IDの書き間違い）と、でたらめな回答2万通りで組み立てた結果（3件・顕在型2/潜在型1・引用・時間の制約）を点検し、テスト用4人の結果を `.persona-results/` に保存する。部品・設問・`diagnose.ts` を直したら必ず流す。`ONLY=office` で仕事のタイプを絞れる
+- 画面は `/result?sample=1` で、結果の見本（テスト用Aさんの回答で組み立てたもの）を表示できる
 
 ## 本番に出す前に
 
-- Vercel の環境変数に `GEMINI_API_KEY`・`NEXT_PUBLIC_CTA_URL` を入れる
-- 回数制限（`src/lib/rate-limit.ts`）はサーバーのメモリで数えているだけ（実行環境ごと・再起動で0）。**Vercel の Firewall でレート制限ルールを足す**こと（例: `/api/diagnose` を同じIPから1時間に10回まで）
-- **Google 側でもキーの使いすぎを止める**（Google Cloud の予算アラート・1日の上限）。サイト内の上限は実行環境ごとなので、請求額の本当の天井にはならない
-- IPアドレスは `process.env.VERCEL` があれば Vercel のヘッダー、なければ `cf-connecting-ip`（Cloudflare）を見る。それ以外の置き場所に出すなら `clientIp` を見直す（偽れるヘッダーを信じると回数制限をすり抜けられる）
+- Vercel の環境変数に `NEXT_PUBLIC_CTA_URL` を入れる
 - セキュリティヘッダーは `next.config.ts`。CSP は埋め込み禁止（frame-ancestors）だけで、スクリプトの制限はまだ入れていない（入れるなら本番相当で動作確認してから）
 - 本番公開（Vercel への反映）は必ずユーザーの確認を取ってから
 
 ## 作りの要点
 
-- 回答はすべて選択式。ブラウザからは選択肢のIDだけを受け取り、`src/lib/answers.ts` で文言に戻してからAIに渡す（勝手な文章をAIに渡さない）
-- 例外の深掘り（STEP5）は、AIが作った質問をブラウザが送り返すので、`/api/followup` で署名を付けて `/api/diagnose` で確かめる（`src/lib/followup-sig.ts`）。署名が合わない質問は使わない
-- 「書いてはいけない言葉」の点検（`src/lib/schemas.ts` の policyIssues）は、普通の文を引っかけると2回とも落ちて結果が出せなくなる。言い回しを足すときは狭めに書き、`docs/02-ai-prompts.md`「7. 守ること」とそろえる
+- 回答はすべて選択式で、選択肢のIDで持つ。文言は `src/data/questions.ts` から引く。結果の部品もこのIDで回答を見ているので、選択肢の並びを変えたら `npm run check:results`
+- STEP5（深掘り）は、1-2「具体的には？」の答えごとに用意した4択1問（`questions.ts` の JOB_FAMILIES）。引用の言い回し（cite）も同じ場所
+- 結果は `src/lib/diagnose.ts` が部品から点数で選んで組み立てる（同じ回答なら毎回同じ結果）。選び方は `docs/02-result-rules.md` の3章
+- 「書いてはいけない言葉」（金額・「稼げる」・資格が必要な仕事など）は、部品を書く段階で `npm run check:results` が見る（`scripts/check-results.ts` の POLICY_PATTERNS）。言い回しを足すときは `docs/02-result-rules.md`「5. 部品の書き方の決まり」とそろえる
+- 点検の道具は Node で `src/` の TypeScript をそのまま読む（`scripts/alias-hooks.mjs` が `@/` を読み替える）。`diagnose.ts` から読むファイルに JSX（画面の部品）を入れない
 - 回答・結果はブラウザの sessionStorage にだけ置く。サーバーにもデータベースにも保存しない
 - 見た目の決まりごとは `src/app/globals.css` の冒頭と `src/app/tokens.css`（運営会社サイト color-with.com に合わせた値）。色は tokens.css の名前で引き、画面側に #hex を書かない
 

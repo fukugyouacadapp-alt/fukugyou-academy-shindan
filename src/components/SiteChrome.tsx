@@ -1,4 +1,6 @@
+import Image from 'next/image'
 import Link from 'next/link'
+import logo from '@/assets/fukugyou-academy-logo.png'
 import { OPERATOR, SITE_NAME } from '@/lib/site'
 
 export function SiteHeader({ right }: { right?: React.ReactNode }) {
@@ -6,9 +8,11 @@ export function SiteHeader({ right }: { right?: React.ReactNode }) {
     <header>
       <div className="top-band" />
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4">
-        <Link href="/" className="flex items-baseline gap-2 font-display text-[1.05rem] font-bold tracking-wider">
-          {SITE_NAME}
-          <span className="hidden text-xs font-normal tracking-normal text-sub sm:inline">by 複業アカデミー</span>
+        <Link href="/" className="flex items-center gap-3">
+          {/* 複業アカデミーのロゴ（元の画像は 1400×938。高さ40pxで表示） */}
+          <Image src={logo} alt="複業アカデミー" width={60} height={40} loading="eager" />
+          <span aria-hidden className="h-6 w-px bg-line" />
+          <span className="font-display text-[1.05rem] font-bold tracking-wider">{SITE_NAME}</span>
         </Link>
         {right}
       </div>

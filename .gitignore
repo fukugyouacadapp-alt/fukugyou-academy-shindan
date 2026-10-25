@@ -52,5 +52,5 @@ next-env.d.ts
 # Python のキャッシュ
 __pycache__/
 
-# テスト用4人の診断結果（npm run test:personas）
+# テスト用4人の診断結果（npm run check:results）
 .persona-results/

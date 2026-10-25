@@ -4,13 +4,12 @@ import { CTA_LABEL, CTA_URL } from '@/lib/site'
 import { CtaLink, ShareButton } from './Buttons'
 import { MarketMap } from './MarketMap'
 import { RecommendationCard } from './RecommendationCard'
-import { SkillLayerMap } from './SkillLayerMap'
-import { StrengthTriad } from './StrengthTriad'
 
 /**
  * 診断結果の画面。
- * いちばん知りたい「おすすめの仕事」を先に見せ、そのあとに根拠となる強みの分析を置く（スマホで長くスクロールさせる前に核心へ）。
- * 二つ名 → 要約・タグ・選んだ回答 → ニッチ複業5つ → 小さな申し込み案内 → 3要素 → 3層マップ → 市場 → 伸ばす強み → 注意点 → 申し込み → 注意書き
+ * いちばん知りたい「おすすめの仕事」を先に見せ、そのあとに得意な市場などを置く（スマホで長くスクロールさせる前に核心へ）。
+ * 申し込みの案内は、講師との面談へ誘う（2026-10-24 に、ポートフォリオづくりの案内から変えた）。
+ * 二つ名 → 要約・タグ・選んだ回答 → ニッチ複業3つ → 小さな面談の案内 → 市場 → 伸ばす強み → 注意点 → 面談の申し込み → 注意書き
  */
 export function ResultView({
   result,
@@ -47,7 +46,7 @@ export function ResultView({
           <Quoted text={result.summary} />
         </p>
         <ul className="mt-5 flex flex-wrap gap-2" aria-label="強みハッシュタグ">
-          {/* key に番号も入れる：AIが同じタグを2回返しても、表示が崩れないように（以下の一覧も同じ） */}
+          {/* key に番号も入れる：同じタグが2回入っても、表示が崩れないように（以下の一覧も同じ） */}
           {result.strength_tags.map((t, i) => (
             <li key={`${t}-${i}`} className="tag">{t}</li>
           ))}
@@ -65,37 +64,27 @@ export function ResultView({
       </section>
 
       {/* ニッチ複業 */}
-      <Section eyebrow="おすすめのニッチ複業" title="あなたの強みが活きる5つの仕事" lead="顕在型（本業スキルをすぐ活かせる仕事）を3つ、潜在型（自分では気づきにくい強みを活かす仕事）を2つ選びました。">
+      <Section eyebrow="おすすめのニッチ複業" title="あなたの強みが活きる3つの仕事" lead="顕在型（本業スキルをすぐ活かせる仕事）を2つ、潜在型（自分では気づきにくい強みを活かす仕事）を1つ選びました。">
         <div className="flex flex-col gap-5">
           {result.recommendations.map((rec, i) => (
             <RecommendationCard key={`${rec.rank}-${i}`} rec={rec} featured={rec.rank === 1} />
           ))}
         </div>
         <p className="mt-4 text-xs leading-relaxed text-sub">
-          ※「強み活用度」「市場ニーズ」「ねらい目の理由」は、あなたの回答とAIの見立てによる目安です。実際の案件の数を調べたものではありません。
+          ※「強み活用度」「市場ニーズ」「ねらい目の理由」は、あなたの回答をもとにした目安です。実際の案件の数を調べたものではありません。
         </p>
       </Section>
 
       {CTA_URL && (
         <section className="card mt-8 flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <p className="text-sm leading-relaxed">
-            <span className="font-bold">この5つから、どれを選んで、どう始めるか。</span>
+            <span className="font-bold">この3つから、どれを選んで、どう始めるか。</span>
             <br />
-            講師と一緒に考えてみませんか。
+            講師との無料面談で、一緒に考えてみませんか。
           </p>
           <CtaLink href={CTA_URL} label={CTA_LABEL} />
         </section>
       )}
-
-      {/* 3要素 */}
-      <Section eyebrow="強みの3要素" title="マインド × テクニック × ナレッジ">
-        <StrengthTriad strengths={result.strengths} />
-      </Section>
-
-      {/* 3層マップ */}
-      <Section eyebrow="強みの3層マップ" title="本業から、顕在型・潜在型へ" lead="複業は「複数の本業を積み重ねて、可能性を拡げる働き方」。内側の本業を起点に、外側へ広げていきます。">
-        <SkillLayerMap map={result.skill_map} />
-      </Section>
 
       {/* 市場 */}
       <Section eyebrow="得意な市場・領域" title="あなたが活きる場所">
@@ -120,16 +109,16 @@ export function ResultView({
         )}
       </section>
 
-      {/* 申し込み */}
+      {/* 面談の申し込み */}
       <section className="mt-12 rounded-[var(--radius-md)] bg-brand-paper p-6 text-center sm:p-10">
         <p className="eyebrow justify-center">次の一歩</p>
         <h2 className="mt-3 text-xl leading-snug sm:text-2xl">
-          この結果をもとに、講師と一緒に
+          この結果をもとに、
           <br className="hidden sm:inline" />
-          「あなたの複業ポートフォリオ」をつくりませんか？
+          講師と面談してみませんか？
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed">
-          ポートフォリオは、案件に応募するときに使う自己紹介ページです。複業アカデミーでは、強みの棚卸しからポートフォリオづくりまでを、講師が伴走します。
+          3つの仕事のどれから始めるか、本業とどう両立するか。面談では、この結果を見ながら、あなたに合う始め方を講師と一緒に考えます。面談は無料です。
         </p>
         {CTA_URL ? (
           <div className="mt-6">
@@ -143,7 +132,7 @@ export function ResultView({
       {/* 固定の注意書き */}
       <ul className="mt-10 flex flex-col gap-1 text-xs leading-relaxed text-sub">
         <li>・複業（副業）を始める前に、お勤め先の就業規則（副業のルール）を確認してください。</li>
-        <li>・この結果はAIによる提案です。収入や案件の獲得を約束するものではありません。</li>
+        <li>・この結果は、選んだ回答をもとにした提案です。収入や案件の獲得を約束するものではありません。</li>
       </ul>
 
       {footerActions && <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">{footerActions}</div>}

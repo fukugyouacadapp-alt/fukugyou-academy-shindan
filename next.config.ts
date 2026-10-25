@@ -2,7 +2,7 @@ import path from "node:path";
 import type { NextConfig } from "next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
-// 全ページ・全APIの応答に付ける安全のための指示（ブラウザ向け）。
+// 全ページの応答に付ける安全のための指示（ブラウザ向け）。
 // CSP は「他のサイトの枠の中に表示させない」の1項目だけにしている。
 // スクリプトの読み込み元まで縛ると、アクセス解析（@vercel/analytics）や Next.js が
 // ページに埋め込む小さなスクリプトが止まって画面が壊れる恐れがあり、実機で確かめられていないため。

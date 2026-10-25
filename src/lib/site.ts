@@ -1,8 +1,8 @@
-/** サイト名（仮）。決まったらここだけ直す */
-export const SITE_NAME = '複業ニッチ診断'
+/** サイト名。変えるときはここだけ直す（2026-10-25 に「複業ニッチ診断」から変えた） */
+export const SITE_NAME = '複業診断'
 
 /** シェア文に付けるハッシュタグ（# は付けない） */
-export const SHARE_HASHTAG = '複業ニッチ診断'
+export const SHARE_HASHTAG = '複業診断'
 
 /**
  * https: で始まる正しいURLのときだけ、そのURLを返す。それ以外は空文字。
@@ -19,10 +19,10 @@ function httpsUrlOrEmpty(raw: string | undefined): string {
   }
 }
 
-/** 結果画面の申し込みボタンのリンク先（LINE公式アカウント・無料相談など）。未設定・https: 以外ならボタンを出さない */
+/** 結果画面の申し込みボタンのリンク先（講師との面談の申し込みページ）。未設定・https: 以外ならボタンを出さない */
 export const CTA_URL = httpsUrlOrEmpty(process.env.NEXT_PUBLIC_CTA_URL)
 
-/** 申し込みボタンの文言（LINE登録なら「LINEで相談する」など、リンク先に合わせて変える） */
-export const CTA_LABEL = process.env.NEXT_PUBLIC_CTA_LABEL || '無料相談を申し込む'
+/** 申し込みボタンの文言（面談は無料。LINE で受け付けるなら「LINEで無料面談を申し込む」など、リンク先に合わせて変える） */
+export const CTA_LABEL = process.env.NEXT_PUBLIC_CTA_LABEL || '無料面談を申し込む'
 
 export const OPERATOR = '複業アカデミー（Color WiTh株式会社）'

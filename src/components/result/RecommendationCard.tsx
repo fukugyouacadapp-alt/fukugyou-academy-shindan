@@ -1,10 +1,9 @@
 import { Quoted } from '@/components/Quoted'
 import type { Recommendation } from '@/lib/schemas'
-import { CopyChip } from './Buttons'
 
 /**
- * おすすめのニッチ複業1件。1位は全部広げて見せ、2〜5位は「くわしく見る」で畳む
- * （5件ぜんぶ広げるとスマホで長くなりすぎるため）。「あなたに向いている理由」と「今週の一歩」は常に見せる。
+ * おすすめのニッチ複業1件。1位は全部広げて見せ、2・3位は「くわしく見る」で畳む
+ * （3件ぜんぶ広げるとスマホで長くなりすぎるため）。「あなたに向いている理由」と「今週の一歩」は常に見せる。
  */
 export function RecommendationCard({ rec, featured = false }: { rec: Recommendation; featured?: boolean }) {
   const layerKey = rec.layer === '潜在型' ? 'senzai' : 'kenzai'
@@ -12,14 +11,6 @@ export function RecommendationCard({ rec, featured = false }: { rec: Recommendat
     <dl className="grid gap-4">
       <Item label="困っている人・会社">{rec.who_needs}</Item>
       <Item label="ねらい目の理由">{rec.niche_point}</Item>
-      <div>
-        <dt className="text-xs font-bold text-sub">案件を探すキーワード（押すとコピー）</dt>
-        <dd className="mt-2 flex flex-wrap gap-2">
-          {rec.search_keywords.map((k, i) => (
-            <CopyChip key={`${k}-${i}`} text={k} />
-          ))}
-        </dd>
-      </div>
     </dl>
   )
 
@@ -59,7 +50,7 @@ export function RecommendationCard({ rec, featured = false }: { rec: Recommendat
           ) : (
             <details className="group">
               <summary className="btn-text inline-block list-none [&::-webkit-details-marker]:hidden">
-                <span className="group-open:hidden">くわしく見る（困っている人・キーワードなど）</span>
+                <span className="group-open:hidden">くわしく見る（困っている人・ねらい目の理由）</span>
                 <span className="hidden group-open:inline">閉じる</span>
               </summary>
               <div className="mt-4">{details}</div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
-import type { Answers, FollowUp } from '@/data/questions'
+import type { Answers } from '@/data/questions'
 import { resultSchema, type DiagnosisResult } from '@/lib/schemas'
 
 /**
@@ -11,11 +11,11 @@ import { resultSchema, type DiagnosisResult } from '@/lib/schemas'
  * 読み出すときは形を確かめ、合わなければ「無い」として扱う（古い形の保存内容で画面が落ちないように）。
  */
 
-const PREFIX = 'shindan:v1:'
+// v2：結果をAIで作る形から、部品で組み立てる形に変えた（2026-10-24）。前の形で保存された回答・結果を読まないように版を上げた
+const PREFIX = 'shindan:v2:'
 export const KEYS = {
   answers: `${PREFIX}answers`,
   screen: `${PREFIX}screen`,
-  followUps: `${PREFIX}followups`,
   result: `${PREFIX}result`,
 } as const
 
@@ -73,29 +73,6 @@ function toAnswers(v: unknown): Answers | null {
   return Object.fromEntries(entries)
 }
 
-function isFollowUp(v: unknown): v is FollowUp {
-  if (!isObject(v)) return false
-  const { question, options, answer, sig } = v
-  return (
-    typeof question === 'string' &&
-    isStringArray(options) &&
-    options.length === 4 &&
-    (answer === null || typeof answer === 'string') &&
-    (sig === undefined || typeof sig === 'string')
-  )
-}
-
-/** 深掘りは1問でも形が崩れていたら全部捨てる。余計な項目は落として詰め直す（診断のときにそのまま送るので） */
-function toFollowUps(v: unknown): FollowUp[] | null {
-  if (!Array.isArray(v) || !v.every(isFollowUp)) return null
-  return v.map((f: FollowUp) => ({
-    question: f.question,
-    options: f.options,
-    answer: f.answer,
-    ...(f.sig === undefined ? {} : { sig: f.sig }),
-  }))
-}
-
 function toResult(v: unknown): DiagnosisResult | null {
   const parsed = resultSchema.safeParse(v)
   return parsed.success ? parsed.data : null
@@ -110,9 +87,7 @@ export const store = {
   setAnswers: (a: Answers) => write(KEYS.answers, a),
   screen: () => toScreen(read(KEYS.screen)),
   setScreen: (n: number) => write(KEYS.screen, n),
-  /** null は「まだ深掘りを取りに行っていない」、[] は「取りに行ったが質問が無かった（または待たずに進んだ）」 */
-  followUps: () => toFollowUps(read(KEYS.followUps)),
-  setFollowUps: (f: FollowUp[] | null) => write(KEYS.followUps, f),
+  /** 組み立てた結果。回答を変えたら消す（結果画面は、これが無いときだけ組み立てて「読み解いています」を見せる） */
   result: () => toResult(read(KEYS.result)),
   setResult: (r: DiagnosisResult | null) => write(KEYS.result, r),
   clearAll: () => Object.values(KEYS).forEach(k => write(k, null)),

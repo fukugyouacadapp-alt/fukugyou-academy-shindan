@@ -37,10 +37,10 @@ export const metadata: Metadata = {
     template: `%s｜${SITE_NAME}`,
   },
   description:
-    '選ぶだけ約3分。あなたの強みを #ハッシュタグ で言葉にし、強みが活きるニッチな複業を5つ提案します。複業アカデミーの無料診断。',
+    '選ぶだけ約3分。あなたの強みを #ハッシュタグ で言葉にし、強みが活きるニッチな複業を3つ提案します。複業アカデミーの無料診断。',
   openGraph: {
     title: `${SITE_NAME}｜強みから見つける、あなただけの複業`,
-    description: '選ぶだけ約3分。強みが活きるニッチな複業を5つ提案します。',
+    description: '選ぶだけ約3分。強みが活きるニッチな複業を3つ提案します。',
     siteName: SITE_NAME,
     locale: 'ja_JP',
     type: 'website',
