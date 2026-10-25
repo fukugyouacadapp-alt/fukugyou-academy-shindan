@@ -78,6 +78,28 @@ export function firstUnansweredScreen(a: Answers): number | null {
   return i === -1 ? null : i
 }
 
+/**
+ * ブラウザの履歴に置く印。画面を進めるたびに履歴を1つ足し、スマホやブラウザの「戻る」で1つ前の画面に戻れるようにする
+ * （アドレスは /shindan のまま変えない。アクセス計測でページを見た回数が増えないように）。
+ * pushed は「1つ前の画面から進んできた履歴」の印。これがあるときだけ、画面の「戻る」もブラウザの「戻る」と同じ動きにする
+ */
+const HISTORY_KEY = 'shindan'
+type HistoryMark = { screen: number; pushed: boolean }
+
+function historyMark(state: unknown): HistoryMark | null {
+  if (typeof state !== 'object' || state === null) return null
+  const v = (state as Record<string, unknown>)[HISTORY_KEY]
+  if (typeof v !== 'object' || v === null) return null
+  const { screen, pushed } = v as Record<string, unknown>
+  return typeof screen === 'number' ? { screen, pushed: pushed === true } : null
+}
+
+/** いまの履歴に印を付け直す（履歴は増やさない）。Next.js が使う中身は Next.js 側で引き継がれる */
+function markHistory(screen: number) {
+  const pushed = historyMark(window.history.state)?.pushed ?? false
+  window.history.replaceState({ [HISTORY_KEY]: { screen, pushed } satisfies HistoryMark }, '')
+}
+
 /** 保存されていた画面番号が、いまの答えでは空の画面を指していたら、手前の画面へ戻す */
 function normalizeScreen(i: number, a: Answers): number {
   if (!Number.isInteger(i) || i < 0) return 0
@@ -118,9 +140,35 @@ function QuizInner() {
     store.setResult(null)
   }, [init])
 
-  function move(i: number) {
+  // 開いた画面の番号を、いまの履歴に付けておく（ここへ「戻る」で帰ってきたときに、この画面を出すため）
+  useEffect(() => {
+    markHistory(init.s)
+  }, [init])
+
+  // ブラウザの「戻る」「進む」で履歴を移ったら、その履歴の画面を出す
+  useEffect(() => {
+    function onPopState(e: PopStateEvent) {
+      const mark = historyMark(e.state)
+      if (!mark) return
+      const a = latest.current
+      // 「戻る」のあとで答えを変えてから「進む」を押しても、まだ答えていない画面を飛び越さないように
+      const unanswered = firstUnansweredScreen(a)
+      const i = normalizeScreen(unanswered === null ? mark.screen : Math.min(mark.screen, unanswered), a)
+      if (i !== mark.screen) markHistory(i)
+      setScreen(i)
+      store.setScreen(i)
+      window.scrollTo({ top: 0 })
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  /** 画面を移す。push は履歴を1つ足す（「次へ」）、replace はいまの履歴を書き換える */
+  function move(i: number, how: 'push' | 'replace') {
     setScreen(i)
     store.setScreen(i)
+    if (how === 'push') window.history.pushState({ [HISTORY_KEY]: { screen: i, pushed: true } satisfies HistoryMark }, '')
+    else markHistory(i)
     window.scrollTo({ top: 0 })
   }
 
@@ -144,14 +192,17 @@ function QuizInner() {
   function goNext() {
     const i = nextScreen(screen, latest.current)
     if (i === null) router.push('/result')
-    else move(i)
+    else move(i, 'push')
   }
 
   function goBack() {
     let i = screen - 1
     while (i > 0 && !hasQuestions(i, latest.current)) i--
     if (i < 0) router.push('/')
-    else move(i)
+    // 1つ前の画面から進んできた履歴なら、ブラウザの「戻る」と同じにする（履歴と画面の並びがずれないように）。
+    // 「前回の続きから」で開いたときなどは手前の履歴が無いので、いまの履歴を書き換えて戻る
+    else if (historyMark(window.history.state)?.pushed) window.history.back()
+    else move(i, 'replace')
   }
 
   function restart() {
@@ -159,7 +210,7 @@ function QuizInner() {
     latest.current = {}
     setAnswers({})
     setResumed(false)
-    move(0)
+    move(0, 'replace')
   }
 
   const step = SCREENS[screen].step

@@ -15,7 +15,7 @@
   --color-paper-2:      #f1f2f2;   /* 押せる場所のホバー・くぼみ */
   --color-paper-3:      #e6e7e7;   /* （派生） */
   --color-rule:         #e3e4e4;   /* 罫線（派生） */
-  --color-rule-strong:  #cfd0d0;   /* （派生） */
+  --color-rule-strong:  #8c8c8c;   /* 選択肢の札・スライダーの丸のふち（派生。白地で 3.4:1。押せる場所だと分かる濃さ） */
   --color-muted:        #6b6b6b;   /* 補足の文字（派生。白地で 5.5:1） */
   --color-ink-2:        #333333;
   --color-ink:          #333333;   /* 本文の文字 */
