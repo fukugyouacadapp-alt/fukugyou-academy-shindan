@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import logo from '@/assets/fukugyou-academy-logo.png'
-import { OPERATOR, SITE_NAME } from '@/lib/site'
+import { OPERATOR, PRIVACY_POLICY_URL, SITE_NAME } from '@/lib/site'
 
 export function SiteHeader({ right }: { right?: React.ReactNode }) {
   return (
@@ -27,6 +27,9 @@ export function SiteFooter() {
         <p>運営：{OPERATOR}</p>
         <nav className="flex gap-5">
           <Link href="/privacy" className="underline underline-offset-2">回答の取り扱い</Link>
+          <a href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+            プライバシーポリシー
+          </a>
         </nav>
       </div>
     </footer>

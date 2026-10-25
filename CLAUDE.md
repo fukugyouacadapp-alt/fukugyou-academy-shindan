@@ -24,6 +24,14 @@ AIは使わない（2026-10-24 に Gemini をやめた）。用意した文面�
 - `npm run check:results`（開発サーバーは要らない・料金もかからない）: 結果の部品（数・文字数・書き方・禁止語・回答IDの書き間違い）と、でたらめな回答2万通りで組み立てた結果（3件・顕在型2/潜在型1・引用・時間の制約）を点検し、テスト用4人の結果を `.persona-results/` に保存する。部品・設問・`diagnose.ts` を直したら必ず流す。`ONLY=office` で仕事のタイプを絞れる
 - 画面は `/result?sample=1` で、結果の見本（テスト用Aさんの回答で組み立てたもの）を表示できる
 
+## 本番（Vercel）
+
+- 本番URL: https://fukugyou-academy-shindan.vercel.app （Vercel のチーム haikiekis-projects ／ プロジェクト fukugyou-academy-shindan。2026-10-25 に初公開）
+- GitHub にはつないでいない。公開はこのフォルダから `vercel deploy --prod --yes --scope haikiekis-projects`（Vercel 側で組み立てるので、このPCのメモリはほぼ使わない）。送らないファイルは `.vercelignore`
+- 環境変数は Vercel の設定画面か `vercel env add <名前> production --scope haikiekis-projects --project fukugyou-academy-shindan`（値は標準入力で渡す）。`NEXT_PUBLIC_` で始まる値は組み立てのときに埋め込まれるので、変えたら公開し直す
+- いま入っているのは `NEXT_PUBLIC_SITE_URL`（本番URL）だけ。面談の申し込みURL `NEXT_PUBLIC_CTA_URL` は未設定（ボタンの代わりに「申し込み先は準備中です」が出る）
+- Claude の Vercel MCP には、このプロジェクトの設定・環境変数を変える権限がない（403）。CLI（`vercel api` / `vercel env`）を使う
+
 ## 本番に出す前に
 
 - Vercel の環境変数に `NEXT_PUBLIC_CTA_URL` を入れる

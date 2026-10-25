@@ -26,3 +26,6 @@ export const CTA_URL = httpsUrlOrEmpty(process.env.NEXT_PUBLIC_CTA_URL)
 export const CTA_LABEL = process.env.NEXT_PUBLIC_CTA_LABEL || '無料面談を申し込む'
 
 export const OPERATOR = '複業アカデミー（Color WiTh株式会社）'
+
+/** 運営会社のプライバシーポリシー（フッターと「回答の取り扱い」ページからリンクする） */
+export const PRIVACY_POLICY_URL = 'https://color-with.com/privacy-policy/'

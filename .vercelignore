@@ -1,0 +1,11 @@
+# 手元から `vercel deploy` で公開するとき、Vercel に送らないもの
+# 秘密の設定（.env.local など）。本番の値は Vercel の設定画面（環境変数）で入れる
+.env*
+# 手元だけで使うもの・Vercel 側で作り直すもの
+node_modules
+.next
+.git
+.vercel
+.claude
+.playwright-mcp
+.persona-results

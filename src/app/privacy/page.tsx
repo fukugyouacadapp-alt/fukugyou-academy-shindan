@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome'
-import { OPERATOR, SITE_NAME } from '@/lib/site'
+import { OPERATOR, PRIVACY_POLICY_URL, SITE_NAME } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: '回答の取り扱い',
@@ -31,7 +31,13 @@ export default function PrivacyPage() {
           <Block title="結果について">
             診断結果は、選んだ回答をもとにした提案です。収入や案件の獲得を約束するものではありません。副業を始める前に、お勤め先の就業規則（副業のルール）を確認してください。
           </Block>
-          <Block title="運営">{OPERATOR}</Block>
+          <Block title="運営">
+            {OPERATOR}。個人情報の取り扱いは、運営会社の
+            <a href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" className="text-link underline underline-offset-2">
+              プライバシーポリシー
+            </a>
+            に従います。
+          </Block>
         </div>
       </main>
       <SiteFooter />
