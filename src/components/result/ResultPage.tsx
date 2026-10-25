@@ -93,7 +93,6 @@ function ResultInner() {
         <p className="mt-3 text-sub">選ぶだけ約3分で、あなたの強みとニッチな複業がわかります。</p>
         <div className="mt-8 flex flex-col items-center gap-4">
           <Link href="/shindan" className="btn-primary">診断をはじめる</Link>
-          <Link href="/result?sample=1" className="btn-text">結果の見本を見る</Link>
         </div>
       </Centered>
     )
@@ -171,7 +170,7 @@ function Centered({ children }: { children: React.ReactNode }) {
   return <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-20 text-center">{children}</div>
 }
 
-const PHASES = ['回答を整理しています', '強みを3つの要素に分けています', '強みが活きる市場を探しています', 'ニッチな複業を3つに絞っています']
+const PHASES = ['回答を整理しています', '強みをハッシュタグにしています', '強みが活きる市場を探しています', 'ニッチな複業を3つに絞っています']
 const TICK_MS = READING_MS / PHASES.length
 
 /** 読み解き中の画面。選んだ回答の言葉を流して、「自分の回答を読んでいる」ことが伝わるようにする */

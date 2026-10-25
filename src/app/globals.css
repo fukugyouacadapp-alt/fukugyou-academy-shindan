@@ -104,14 +104,14 @@ button {
     transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out);
   }
   .btn-primary {
-    background: var(--color-accent);
+    background: var(--color-accent-fill);
     color: var(--color-ink-paper);
-    border: 1px solid var(--color-accent);
+    border: 1px solid var(--color-accent-fill);
     font-weight: 700;
   }
   .btn-primary:hover {
-    background: var(--color-accent-ink);
-    border-color: var(--color-accent-ink);
+    background: var(--color-accent-fill-hover);
+    border-color: var(--color-accent-fill-hover);
   }
   .btn-secondary {
     background: var(--color-surface);
@@ -150,7 +150,7 @@ button {
     padding: 14px 44px;
     border: 3px solid var(--color-ink);
     border-radius: var(--radius-pill);
-    background: var(--color-accent);
+    background: var(--color-accent-fill);
     box-shadow: 0 6px 0 var(--color-ink);
     color: var(--color-ink-paper);
     font-size: 1.3rem;
@@ -163,7 +163,7 @@ button {
       background-color var(--dur-micro) var(--ease-out);
   }
   .btn-start:hover {
-    background: var(--color-accent-ink);
+    background: var(--color-accent-fill-hover);
   }
   .btn-start:active {
     transform: translateY(4px);
@@ -214,8 +214,8 @@ button {
   }
   .choice[aria-pressed="true"],
   .choice[aria-checked="true"] {
-    background: var(--color-accent);
-    border-color: var(--color-accent);
+    background: var(--color-accent-fill);
+    border-color: var(--color-accent-fill);
     color: var(--color-ink-paper);
     font-weight: 700;
   }
