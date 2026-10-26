@@ -188,10 +188,13 @@ function Centered({ children }: { children: React.ReactNode }) {
 
 const PHASES = ['回答を整理しています', '強みをハッシュタグにしています', '強みが活きる市場を探しています', 'ニッチな複業を3つに絞っています']
 const TICK_MS = READING_MS / PHASES.length
+/** ロゴを囲む輪が満ちるまでの長さ。満ちた輪を一瞬見せてから結果へ切り替える */
+const RING_MS = READING_MS - 300
 
 /**
  * 読み解き中の画面。選んだ回答の言葉を流して、「自分の回答を読んでいる」ことが伝わるようにする。
- * 待っている目印は、くるくる回る輪ではなく、ゆれて弾むロゴ（2026-10-26 に変えた。待つ間も楽しめるように）
+ * 待っている目印は、くるくる回る輪ではなく、ゆれて弾むロゴ（2026-10-26 に変えた。待つ間も楽しめるように）。
+ * ロゴのまわりの輪が一周して満ちることで、あとどれくらいで結果が出るかを見せる
  */
 function Reading({ answers }: { answers: Answers }) {
   const [words] = useState(() => pickedLabels(answers))
@@ -205,17 +208,20 @@ function Reading({ answers }: { answers: Answers }) {
   return (
     <Centered>
       <div role="status" aria-live="polite" className="flex flex-col items-center">
-        {/* 動きを減らす設定の人には、止まったロゴだけを見せる（globals.css の prefers-reduced-motion） */}
-        <div aria-hidden className="flex flex-col items-center">
-          <Image
-            {...READING_LOGO}
-            alt=""
-            loading="eager"
-            className="origin-[50%_90%] animate-[logosway_1.2s_ease-in-out_infinite]"
-          />
-          <span className="mt-3 h-2.5 w-24 animate-[logoshadow_1.2s_ease-in-out_infinite] rounded-[50%] bg-line" />
+        {/* 動きを減らす設定の人には、ロゴは止めて見せる（globals.css の prefers-reduced-motion）。輪は進み具合を伝えるので、その人にも満ちていく */}
+        <div aria-hidden className="relative grid h-52 w-52 place-items-center">
+          <ProgressRing ms={RING_MS} />
+          <div className="flex flex-col items-center">
+            <Image
+              {...READING_LOGO}
+              alt=""
+              loading="eager"
+              className="origin-[50%_90%] animate-[logosway_1.2s_ease-in-out_infinite]"
+            />
+            <span className="mt-2 h-2 w-20 animate-[logoshadow_1.2s_ease-in-out_infinite] rounded-[50%] bg-line" />
+          </div>
         </div>
-        <h1 className="mt-6 text-xl">強みを読み解いています</h1>
+        <h1 className="mt-5 text-xl">強みを読み解いています</h1>
         <p className="mt-2 text-sm text-sub">{PHASES[phase]}…</p>
       </div>
       <p aria-hidden className="mt-10 min-h-[3.5rem] text-lg font-bold text-brand-ink">
@@ -230,5 +236,42 @@ function Reading({ answers }: { answers: Answers }) {
         ))}
       </ol>
     </Centered>
+  )
+}
+
+/**
+ * ロゴを囲む輪。上から時計回りにオレンジの線が伸び、ms で一周して満ちる。
+ * 動きを減らす設定でも進み具合は伝えたいので、CSS の動き（設定で止まる）ではなく、時間を測って線の長さを描き直す
+ */
+function ProgressRing({ ms }: { ms: number }) {
+  const arc = useRef<SVGCircleElement>(null)
+  useEffect(() => {
+    const start = performance.now()
+    let id = 0
+    function draw(now: number) {
+      const p = Math.min(1, (now - start) / ms)
+      arc.current?.setAttribute('stroke-dashoffset', String(100 * (1 - p)))
+      if (p < 1) id = requestAnimationFrame(draw)
+    }
+    id = requestAnimationFrame(draw)
+    return () => cancelAnimationFrame(id)
+  }, [ms])
+  return (
+    <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full -rotate-90">
+      <circle cx="50" cy="50" r="47" fill="none" stroke="var(--color-rule)" strokeWidth="3" />
+      <circle
+        ref={arc}
+        cx="50"
+        cy="50"
+        r="47"
+        fill="none"
+        stroke="var(--color-accent)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        pathLength={100}
+        strokeDasharray="100"
+        strokeDashoffset="100"
+      />
+    </svg>
   )
 }

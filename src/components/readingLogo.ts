@@ -3,7 +3,7 @@ import { preload } from 'react-dom'
 import logo from '@/assets/fukugyou-academy-logo.png'
 
 /** 読み解き中の画面で揺らすロゴ（元の画像は 1400×938）。先読みと表示で同じ画像を引くよう、大きさはここだけで決める */
-export const READING_LOGO = { src: logo, width: 132, height: 88 } as const
+export const READING_LOGO = { src: logo, width: 120, height: 80 } as const
 
 /**
  * 読み解き中の画面のロゴを、診断に答えている間に読んでおく。
