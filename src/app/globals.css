@@ -5,6 +5,8 @@
  * 決めごと（運営会社サイト color-with.com に合わせたもの）：白地・墨文字・Noto Sans JP・ピル型ボタン・
  * オレンジは「押すもの・印」にだけ・影なし・絵文字を使わない・ボタンの文言に矢印を付けない。
  * 例外：トップの診断開始ボタン（.btn-start）だけは、濃いふち・下の影・右の三角・上の札で押したくなる形にする（2026-10-25 に決めた）。
+ * 結果画面は、イラストと吹き出しの見出し・アイコン付きの行で読ませる（2026-10-26 に決めた）。イラストは unDraw、アイコンは Tabler Icons
+ * （利用条件は public/third-party-licenses.txt）。吹き出しは淡いオレンジの塗りにして、濃いオレンジで塗った「押すもの」と見分けられるようにする。
  */
 
 /* 画面側の Tailwind で使う色の名前。tokens.css の名前と同じにすると自分自身を指して色が消えるので、別名にしている
@@ -295,6 +297,57 @@ button {
     font-weight: 700;
     letter-spacing: 0.045em;
     line-height: 1.5;
+  }
+
+  /* ── 吹き出しの見出し（結果画面の箱の上ふちに載せる）。押せるボタンと見分けがつくよう、塗りは淡いオレンジ ── */
+  .bubble {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 20px;
+    border: 1.5px solid var(--color-accent);
+    border-radius: var(--radius-pill);
+    background: var(--color-accent-paper);
+    color: var(--color-accent-ink);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1.5;
+  }
+  /* 下向きのしっぽ。四角を45度回して、下の2辺だけ線を引く */
+  .bubble::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -6px;
+    width: 10px;
+    height: 10px;
+    transform: translateX(-50%) rotate(45deg);
+    background: var(--color-accent-paper);
+    border-right: 1.5px solid var(--color-accent);
+    border-bottom: 1.5px solid var(--color-accent);
+  }
+
+  /* 行の頭に置くアイコンの丸 */
+  .icon-dot {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    background: var(--color-accent-paper);
+    color: var(--color-accent-ink);
+  }
+
+  /* 二つ名を囲む枠（墨の2pxの線）。結果のいちばんの見せ場なので、ほかの箱より強く囲む */
+  .nickname-frame {
+    display: inline-block;
+    padding: 10px 22px;
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
   }
 
   /* ── 知らせ ── */

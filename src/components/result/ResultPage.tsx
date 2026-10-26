@@ -7,19 +7,22 @@ import { useEffect, useRef, useState } from 'react'
 import { firstUnansweredScreen, STRENGTH_SCREEN } from '@/components/quiz/Quiz'
 import type { Answers } from '@/data/questions'
 import { buildSample } from '@/data/sample-result'
-import { highlightLabels, pickedLabels, validateAnswers } from '@/lib/answers'
+import { highlightLabels, jobFamilyIndex, pickedLabels, validateAnswers } from '@/lib/answers'
 import { diagnose } from '@/lib/diagnose'
 import type { DiagnosisResult } from '@/lib/schemas'
 import { store, useHydrated } from '@/lib/storage'
 import { ResultView } from './ResultView'
 
+/** 結果と一緒に画面へ渡すもの（選んだ回答の文言・仕事のタイプの番号） */
+type Extras = { highlights: string[]; family: number | null }
+
 type State =
-  | { kind: 'sample'; result: DiagnosisResult; highlights: string[] }
+  | ({ kind: 'sample'; result: DiagnosisResult } & Extras)
   | { kind: 'empty' }
   | { kind: 'incomplete'; screen: number }
   | { kind: 'error' }
-  | { kind: 'reading'; answers: Answers; result: DiagnosisResult; highlights: string[] }
-  | { kind: 'done'; result: DiagnosisResult; highlights: string[] }
+  | ({ kind: 'reading'; answers: Answers; result: DiagnosisResult } & Extras)
+  | ({ kind: 'done'; result: DiagnosisResult } & Extras)
 
 /** 「読み解いています」を見せる長さ。結果はすぐできるが、答え終えてから結果へ切り替わる間をつくる */
 const READING_MS = 2400
@@ -43,7 +46,7 @@ function ResultInner() {
     }
     const answers = store.answers()
     const saved = store.result()
-    if (saved) return { kind: 'done', result: saved, highlights: answers ? highlightLabels(answers) : [] }
+    if (saved) return { kind: 'done', result: saved, highlights: answers ? highlightLabels(answers) : [], family: answers ? jobFamilyIndex(answers) : null }
     if (!answers || Object.keys(answers).length === 0) return { kind: 'empty' }
     // 途中までしか答えていない（結果のURLを直接開いた など）ときは、続きへ案内する
     const unanswered = firstUnansweredScreen(answers)
@@ -51,7 +54,13 @@ function ResultInner() {
     const checked = validateAnswers(answers)
     if (!checked.ok) return { kind: 'incomplete', screen: 0 }
     try {
-      return { kind: 'reading', answers: checked.value, result: diagnose(checked.value), highlights: highlightLabels(checked.value) }
+      return {
+        kind: 'reading',
+        answers: checked.value,
+        result: diagnose(checked.value),
+        highlights: highlightLabels(checked.value),
+        family: jobFamilyIndex(checked.value),
+      }
     } catch (e) {
       console.error('[result]', e instanceof Error ? e.message : e)
       return { kind: 'error' }
@@ -70,7 +79,7 @@ function ResultInner() {
       track('diagnosis_complete', { confidence: init.result.confidence })
     }
     const id = window.setTimeout(() => {
-      setState({ kind: 'done', result: init.result, highlights: init.highlights })
+      setState({ kind: 'done', result: init.result, highlights: init.highlights, family: init.family })
       window.scrollTo({ top: 0 })
     }, READING_MS)
     return () => window.clearTimeout(id)
@@ -130,6 +139,7 @@ function ResultInner() {
       <ResultView
         result={state.result}
         highlights={state.highlights}
+        family={state.family}
         banner={
           <div className="notice notice--wait flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span>これは結果の見本です（人事・採用の仕事をしている方の回答例）。</span>
@@ -146,6 +156,7 @@ function ResultInner() {
     <ResultView
       result={result}
       highlights={state.highlights}
+      family={state.family}
       banner={
         result.confidence === 'low' ? (
           <div className="notice notice--wait">

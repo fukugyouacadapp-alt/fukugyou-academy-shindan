@@ -55,6 +55,14 @@ export function highlightLabels(answers: Answers, max = 5): string[] {
   return [...new Set(labels)].slice(0, max)
 }
 
+/** 1「いまの仕事に近いのは？」で選んだ仕事のタイプの番号（JOB_FAMILIES と同じ並び）。結果画面のイラストを選ぶのに使う */
+export function jobFamilyIndex(answers: Answers): number | null {
+  const v = answers[Q.q1.id]
+  if (!Array.isArray(v)) return null
+  const i = Q.q1.options.findIndex(o => o.id === v[0])
+  return i === -1 ? null : i
+}
+
 /** 分析中の画面に流す言葉（選んだ回答の文言）。「特にない」系は流さない */
 export function pickedLabels(answers: Answers): string[] {
   const noneIds = new Set(activeQuestions(answers).flatMap(q => (q.kind === 'choice' && q.noneId ? [q.noneId] : [])))

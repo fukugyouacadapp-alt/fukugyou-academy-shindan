@@ -47,6 +47,7 @@ AIは使わない（2026-10-24 に Gemini をやめた）。用意した文面�
 - 点検の道具は Node で `src/` の TypeScript をそのまま読む（`scripts/alias-hooks.mjs` が `@/` を読み替える）。`diagnose.ts` から読むファイルに JSX（画面の部品）を入れない
 - 回答・結果はブラウザの sessionStorage にだけ置く。サーバーにもデータベースにも保存しない
 - 見た目の決まりごとは `src/app/globals.css` の冒頭と `src/app/tokens.css`（運営会社サイト color-with.com に合わせた値）。色は tokens.css の名前で引き、画面側に #hex を書かない
+- 結果画面のイラスト（`public/illustrations/`、unDraw）とアイコン（`src/components/result/Icon.tsx`、Tabler Icons）は外部の無料素材。利用条件は `public/third-party-licenses.txt`。unDraw は自動での取り込み（curl など）を規約で認めていないので、足すときはサイトのダウンロードボタンから
 
 ## 触らないもの
 
