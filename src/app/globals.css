@@ -388,6 +388,17 @@ button {
   100% { opacity: 0; }
 }
 
+/* 分析中の画面で、ロゴを左右にゆらしながら軽く弾ませる（待つ間も目で楽しめるように。足もとの影は、弾むと小さく薄くなる） */
+@keyframes logosway {
+  0%, 100% { transform: rotate(-6deg); }
+  25%, 75% { transform: translateY(-10px) rotate(0deg); }
+  50% { transform: rotate(6deg); }
+}
+@keyframes logoshadow {
+  0%, 50%, 100% { transform: scaleX(1); opacity: 0.7; }
+  25%, 75% { transform: scaleX(0.75); opacity: 0.35; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -7,6 +7,7 @@ import {
   activeQuestions, deepQuestion, detailQuestion, Q, SLIDERS, STEPS,
   type Answers, type Question, type StepNo,
 } from '@/data/questions'
+import { preloadReadingLogo } from '@/components/readingLogo'
 import { store, useHydrated } from '@/lib/storage'
 import { ChoiceGroup } from './ChoiceGroup'
 import { SliderScale } from './SliderScale'
@@ -144,6 +145,11 @@ function QuizInner() {
   useEffect(() => {
     markHistory(init.s)
   }, [init])
+
+  // 答え終えたあとの「読み解き中」の画面で揺らすロゴを、答えている間に読んでおく
+  useEffect(() => {
+    preloadReadingLogo()
+  }, [])
 
   // ブラウザの「戻る」「進む」で履歴を移ったら、その履歴の画面を出す
   useEffect(() => {

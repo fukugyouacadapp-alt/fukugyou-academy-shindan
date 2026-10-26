@@ -1,10 +1,12 @@
 'use client'
 
 import { track } from '@vercel/analytics'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { firstUnansweredScreen, STRENGTH_SCREEN } from '@/components/quiz/Quiz'
+import { READING_LOGO } from '@/components/readingLogo'
 import type { Answers } from '@/data/questions'
 import { buildSample } from '@/data/sample-result'
 import { highlightLabels, jobFamilyIndex, pickedLabels, validateAnswers } from '@/lib/answers'
@@ -184,7 +186,10 @@ function Centered({ children }: { children: React.ReactNode }) {
 const PHASES = ['回答を整理しています', '強みをハッシュタグにしています', '強みが活きる市場を探しています', 'ニッチな複業を3つに絞っています']
 const TICK_MS = READING_MS / PHASES.length
 
-/** 読み解き中の画面。選んだ回答の言葉を流して、「自分の回答を読んでいる」ことが伝わるようにする */
+/**
+ * 読み解き中の画面。選んだ回答の言葉を流して、「自分の回答を読んでいる」ことが伝わるようにする。
+ * 待っている目印は、くるくる回る輪ではなく、ゆれて弾むロゴ（2026-10-26 に変えた。待つ間も楽しめるように）
+ */
 function Reading({ answers }: { answers: Answers }) {
   const [words] = useState(() => pickedLabels(answers))
   const [tick, setTick] = useState(0)
@@ -197,8 +202,17 @@ function Reading({ answers }: { answers: Answers }) {
   return (
     <Centered>
       <div role="status" aria-live="polite" className="flex flex-col items-center">
-        <span aria-hidden className="h-12 w-12 animate-spin rounded-full border-4 border-[var(--color-accent-paper)] border-t-[var(--color-accent)]" />
-        <h1 className="mt-8 text-xl">強みを読み解いています</h1>
+        {/* 動きを減らす設定の人には、止まったロゴだけを見せる（globals.css の prefers-reduced-motion） */}
+        <div aria-hidden className="flex flex-col items-center">
+          <Image
+            {...READING_LOGO}
+            alt=""
+            loading="eager"
+            className="origin-[50%_90%] animate-[logosway_1.2s_ease-in-out_infinite]"
+          />
+          <span className="mt-3 h-2.5 w-24 animate-[logoshadow_1.2s_ease-in-out_infinite] rounded-[50%] bg-line" />
+        </div>
+        <h1 className="mt-6 text-xl">強みを読み解いています</h1>
         <p className="mt-2 text-sm text-sub">{PHASES[phase]}…</p>
       </div>
       <p aria-hidden className="mt-10 min-h-[3.5rem] text-lg font-bold text-brand-ink">
