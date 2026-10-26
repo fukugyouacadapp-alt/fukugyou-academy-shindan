@@ -26,8 +26,11 @@ type State =
   | ({ kind: 'reading'; answers: Answers; result: DiagnosisResult } & Extras)
   | ({ kind: 'done'; result: DiagnosisResult } & Extras)
 
-/** 「読み解いています」を見せる長さ。結果はすぐできるが、答え終えてから結果へ切り替わる間をつくる */
-const READING_MS = 2400
+/**
+ * 「読み解いています」を見せる長さ。結果はすぐできるが、答え終えてから結果へ切り替わる間をつくる。
+ * 2026-10-26 に 2.4秒から延ばした（ロゴの揺れ 1.2秒 × 3回。段階の表示は1つ 0.9秒）
+ */
+const READING_MS = 3600
 
 export function ResultPage() {
   const hydrated = useHydrated()

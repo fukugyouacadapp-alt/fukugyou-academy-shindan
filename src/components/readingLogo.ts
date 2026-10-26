@@ -7,7 +7,7 @@ export const READING_LOGO = { src: logo, width: 132, height: 88 } as const
 
 /**
  * 読み解き中の画面のロゴを、診断に答えている間に読んでおく。
- * その画面は約2.4秒しか出ないので、出てから読み始めると、ロゴが出る前に結果へ切り替わることがある
+ * その画面は約3.6秒しか出ないので、出てから読み始めると、ロゴが出る前に結果へ切り替わることがある
  */
 export function preloadReadingLogo() {
   const { props } = getImageProps({ ...READING_LOGO, alt: '' })
