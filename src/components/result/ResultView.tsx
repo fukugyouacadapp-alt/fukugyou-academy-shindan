@@ -3,7 +3,7 @@ import { Quoted } from '@/components/Quoted'
 import type { DiagnosisResult } from '@/lib/schemas'
 import { CTA_LABEL, CTA_URL } from '@/lib/site'
 import { BubbleCard, IconRow } from './Blocks'
-import { CtaLink, ShareButton } from './Buttons'
+import { CtaLink } from './Buttons'
 import { Icon } from './Icon'
 import { MarketMap } from './MarketMap'
 import { RecommendationCard } from './RecommendationCard'
@@ -63,9 +63,6 @@ export function ResultView({
           <h1 className="nickname-frame max-w-2xl text-[1.6rem] leading-snug sm:text-4xl">{result.nickname}</h1>
         </div>
         <p className="mx-auto mt-4 max-w-xl text-sub">{result.nickname_reason}</p>
-        <div className="mt-6 flex justify-center">
-          <ShareButton nickname={result.nickname} tags={result.strength_tags} />
-        </div>
       </section>
 
       {/* 要約・タグ・選んだ回答 */}
