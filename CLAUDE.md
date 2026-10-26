@@ -44,6 +44,7 @@ AIは使わない（2026-10-24 に Gemini をやめた）。用意した文面�
 - STEP5（深掘り）は、1-2「具体的には？」の答えごとに用意した4択1問（`questions.ts` の JOB_FAMILIES）。引用の言い回し（cite）も同じ場所
 - 結果は `src/lib/diagnose.ts` が部品から点数で選んで組み立てる（同じ回答なら毎回同じ結果）。選び方は `docs/02-result-rules.md` の3章
 - 「書いてはいけない言葉」（金額・「稼げる」・資格が必要な仕事など）は、部品を書く段階で `npm run check:results` が見る（`scripts/check-results.ts` の POLICY_PATTERNS）。言い回しを足すときは `docs/02-result-rules.md`「5. 部品の書き方の決まり」とそろえる
+- 画面の文は「複業」と書き、「副業」は使わない（2026-10-26 にそろえた）。例外は部品の keywords（募集サイトで引く検索語。いまは画面に出さない）だけ。部品と組み立てた結果は `npm run check:results` が見る
 - 点検の道具は Node で `src/` の TypeScript をそのまま読む（`scripts/alias-hooks.mjs` が `@/` を読み替える）。`diagnose.ts` から読むファイルに JSX（画面の部品）を入れない
 - 回答・結果はブラウザの sessionStorage にだけ置く。サーバーにもデータベースにも保存しない
 - 見た目の決まりごとは `src/app/globals.css` の冒頭と `src/app/tokens.css`（運営会社サイト color-with.com に合わせた値）。色は tokens.css の名前で引き、画面側に #hex を書かない

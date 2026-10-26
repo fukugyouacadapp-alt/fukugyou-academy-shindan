@@ -167,7 +167,7 @@ export function ResultView({
 
       {/* 固定の注意書き */}
       <ul className="mt-10 flex flex-col gap-1 text-xs leading-relaxed text-sub">
-        <li>・複業（副業）を始める前に、お勤め先の就業規則（副業のルール）を確認してください。</li>
+        <li>・複業を始める前に、お勤め先の就業規則（会社の外で働くときの決まり）を確認してください。</li>
         <li>・この結果は、選んだ回答をもとにした提案です。収入や案件の獲得を約束するものではありません。</li>
       </ul>
 

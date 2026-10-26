@@ -55,6 +55,11 @@ function policy(where: string, text: string, isCaution = false) {
   }
 }
 
+// ── 表記：画面に出る文は「副業」ではなく「複業」（2026-10-26 にそろえた）。keywords は募集サイトで引く検索語なので見ない ──
+function notation(where: string, text: string) {
+  if (text.includes('副業')) errors.push(`${where}: 「副業」ではなく「複業」と書いてください`)
+}
+
 // ── 1. 部品の点検 ──
 
 /** 回答の根拠に使える選択肢ID（q2〜q6。「特にない」系は除く） */
@@ -114,9 +119,14 @@ function checkJob(where: string, job: Job, kind: 'kenzai' | 'hidden' | 'extensio
   for (const n of job.details ?? []) if (![1, 2, 3, 4].includes(n)) errors.push(`${where}: details は1〜4「${n}」`)
   if (job.caution !== undefined) checkText(`${where} caution`, job.caution, 100, { end: '。' })
   for (const [field, text] of Object.entries({ title: job.title, what: job.what, who: job.who, because: job.because, niche: job.niche, step: job.step, tags: job.tags?.join(' '), keywords: job.keywords?.join(' ') })) {
-    if (typeof text === 'string') policy(`${where} ${field}`, text)
+    if (typeof text !== 'string') continue
+    policy(`${where} ${field}`, text)
+    if (field !== 'keywords') notation(`${where} ${field}`, text)
   }
-  if (job.caution) policy(`${where} caution`, job.caution, true)
+  if (job.caution) {
+    policy(`${where} caution`, job.caution, true)
+    notation(`${where} caution`, job.caution)
+  }
 }
 
 function checkFamily(family: Family, index: number) {
@@ -150,7 +160,9 @@ function checkFamily(family: Family, index: number) {
     if (d.caution) policy(`${where} caution`, d.caution, true)
     policy(`${where} growth`, d.growth)
     // 二つ名・強み・市場の名前として画面に出る言葉も見る
-    policy(`${where} role/know/field/tags`, [d.role, d.know, d.field?.b, d.field?.c, ...d.tags, ...d.deep.flatMap(x => [x.tag, x.know])].join(' '))
+    const names = [d.role, d.know, d.field?.b, d.field?.c, ...d.tags, ...d.deep.flatMap(x => [x.tag, x.know])].join(' ')
+    policy(`${where} role/know/field/tags`, names)
+    notation(`${where} caution/growth/role/know/field/tags`, [d.caution ?? '', d.growth, names].join(' '))
     if (d.deep.length !== 4) errors.push(`${where}: deep は4つ（STEP5 の選択肢と同じ数）`)
     d.deep.forEach((x, k) => {
       checkTag(`${where} deep[${k}].tag`, x.tag)
@@ -274,6 +286,8 @@ function inspect(r: DiagnosisResult, a: Answers): string[] {
   if (independence && !r.recommendations.some(x => x.contract_style === '月額継続')) issues.push(INDEPENDENCE_ISSUE)
   const text = [r.nickname, r.nickname_reason, r.summary, r.market.domain_name, r.market.comment].join('\n')
   if (/undefined|null|\{x\}/.test(text) || /undefined/.test(JSON.stringify(r))) issues.push('文面に undefined などが混じっている')
+  // 組み立てた文（diagnose.ts が足す言い回しも含む）。結果には keywords が入らないので、まるごと見てよい
+  if (JSON.stringify(r).includes('副業')) issues.push('文面に「副業」が混じっている（「複業」と書く）')
   return issues
 }
 
