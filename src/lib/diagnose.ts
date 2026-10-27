@@ -53,6 +53,12 @@ const CITE_Q6 = byLabel(Q.q6, {
   '転職や病気など、大きな壁を越えた経験': '「{x}」がある',
 })
 
+/** 要約の3文目の結び。つらさを伴うこともある経験は「武器」と呼ばず、同じ立場の人に寄り添える力として書く（2026-10-28） */
+const EXPERIENCE_VALUE = byLabel(Q.q6, {
+  '子育て・介護と仕事の両立': '同じように両立に悩む人に寄り添える力になります',
+  '転職や病気など、大きな壁を越えた経験': '同じように壁にぶつかっている人に寄り添える力になります',
+})
+
 // ── 強みの言葉（選択肢ごと） ──
 
 /** 二つ名の前半。頼まれること（なければ、いちばん自信がある経験）から */
@@ -291,7 +297,7 @@ export function diagnose(answers: Answers): DiagnosisResult {
         ? `人から「${label(q3[0])}」と頼まれることが多く、「${label(q4)}」にやる気が出る、${PERSON_Q4[q4]}です。`
         : `「${label(q2)}」ことにいちばん自信があり、「${label(q4)}」にやる気が出る、${PERSON_Q4[q4]}です。`,
       `${deepClause ?? `「${detailLabel}」の仕事で積み上げてきた`}経験は、別の会社や立場でもそのまま活かせます。`,
-      experience ? `さらに、${experience}ことも、複業ではあなただけの武器になります。` : '',
+      experience ? `さらに、${experience}ことも、${EXPERIENCE_VALUE[q6[0]] ?? '複業ではあなただけの武器になります'}。` : '',
     ].join(''),
     confidence: q3.length === 0 && q6.length === 0 ? 'low' : 'high',
     strength_tags: uniq([...hongyo, ...kenzaiTags, ...senzaiTags]).slice(0, 8),
