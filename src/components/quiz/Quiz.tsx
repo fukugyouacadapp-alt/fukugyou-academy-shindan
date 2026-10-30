@@ -302,6 +302,7 @@ function QuizInner() {
           step={checkpoint}
           answers={answers}
           questionsLeft={questionsLeft}
+          minutesLeft={minutesLeft}
           headingRef={checkpointHeading}
           onContinue={continueFromCheckpoint}
         />
@@ -369,14 +370,16 @@ function QuizInner() {
 
 /**
  * 途中経過（チェックポイント）。描きかけの六角形と、いちばん高い力の一言だけを見せる。
- * 結果の文面と申し込みのボタンは置かない。ボタンは「続きを答える」の1つだけで、結果画面の申し込みボタン（オレンジの塗り）とは見た目を変える
+ * 結果の文面と申し込みのボタンは置かない。ボタンは「続きを答える」の1つだけで、結果画面の申し込みボタン（オレンジの塗り）とは見た目を変える。
+ * ここで離れる人を減らすため、ボタンは墨の塗りで大きく目立たせ、すぐ上に「あと約◯分で結果がわかる」と残りの手間を添える（2026-10-31）
  */
 function Checkpoint({
-  step, answers, questionsLeft, headingRef, onContinue,
+  step, answers, questionsLeft, minutesLeft, headingRef, onContinue,
 }: {
   step: StepNo
   answers: Answers
   questionsLeft: number
+  minutesLeft: number
   headingRef: React.RefObject<HTMLHeadingElement | null>
   onContinue: () => void
 }) {
@@ -402,8 +405,8 @@ function Checkpoint({
           {shown.length === 5 ? '最後の1つの力は、結果画面でそろいます。' : `残りの${6 - shown.length}つの力は、この先の質問で見えてきます。`}
         </p>
       </section>
-      <BottomBar>
-        <button type="button" className="btn-secondary w-full" onClick={onContinue}>続きを答える</button>
+      <BottomBar hint={`選ぶだけ、あと約${minutesLeft}分で結果がわかります`}>
+        <button type="button" className="btn-primary btn-continue w-full" onClick={onContinue}>続きを答える</button>
       </BottomBar>
     </>
   )

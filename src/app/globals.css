@@ -133,6 +133,18 @@ button {
     cursor: not-allowed;
     transform: none;
   }
+  /* 途中経過の「続きを答える」（btn-primary に重ねて使う）。いちばん目立つ墨の塗りで、ひと回り大きく。
+   * 結果画面の予約ボタン（オレンジの塗り）と見分けがつくよう、オレンジは使わない（要件定義 R11。2026-10-31） */
+  .btn-continue {
+    min-height: 56px;
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    font-size: var(--text-md);
+  }
+  .btn-continue:hover {
+    background: var(--color-ink-fill-hover);
+    border-color: var(--color-ink-fill-hover);
+  }
   .btn-text {
     color: var(--color-blue);
     text-decoration: underline;
