@@ -7,7 +7,9 @@ import {
   activeQuestions, deepQuestion, detailQuestion, Q, SLIDERS, STEPS,
   type Answers, type Question, type StepNo,
 } from '@/data/questions'
+import { RadarChart } from '@/components/RadarChart'
 import { preloadReadingLogo } from '@/components/readingLogo'
+import { axesShownAfter, radarScores, strongestAxis } from '@/lib/radar'
 import { store, useHydrated } from '@/lib/storage'
 import { ChoiceGroup } from './ChoiceGroup'
 import { SliderScale } from './SliderScale'
@@ -15,6 +17,8 @@ import { SliderScale } from './SliderScale'
 /**
  * 診断の画面（STEP1〜5。9画面）。1画面に1〜3問。
  * 回答は変えるたびに sessionStorage へ保存するので、閉じても続きから再開できる。
+ * STEP2・3・4 を答え終えたら、途中経過（描きかけの六角形と「まだ続きます。あと◯問」）を1画面はさむ
+ * （要件定義 R11。途中で終わったと思わせず、続きを見たい気持ちで最後まで答えてもらうため。2026-10-31）。
  */
 
 type Screen = { step: StepNo; questions: (a: Answers) => Question[] }
@@ -33,6 +37,9 @@ export const SCREENS: Screen[] = [
   { step: 4, questions: () => SLIDERS },
   { step: 5, questions: a => some(deepQuestion(a)) },
 ]
+
+/** 答え終えたあとに途中経過をはさむ STEP */
+const CHECKPOINT_STEPS: StepNo[] = [2, 3, 4]
 
 /** 結果画面の「強みの質問に戻って選び直す」で使う */
 export const STRENGTH_SCREEN = SCREENS.findIndex(s => s.step === 2)
@@ -85,14 +92,16 @@ export function firstUnansweredScreen(a: Answers): number | null {
  * pushed は「1つ前の画面から進んできた履歴」の印。これがあるときだけ、画面の「戻る」もブラウザの「戻る」と同じ動きにする
  */
 const HISTORY_KEY = 'shindan'
-type HistoryMark = { screen: number; pushed: boolean }
+/** checkpoint は、その画面を答え終えたあとの途中経過を出している履歴の印（どの STEP の後か） */
+type HistoryMark = { screen: number; pushed: boolean; checkpoint?: StepNo }
 
 function historyMark(state: unknown): HistoryMark | null {
   if (typeof state !== 'object' || state === null) return null
   const v = (state as Record<string, unknown>)[HISTORY_KEY]
   if (typeof v !== 'object' || v === null) return null
-  const { screen, pushed } = v as Record<string, unknown>
-  return typeof screen === 'number' ? { screen, pushed: pushed === true } : null
+  const { screen, pushed, checkpoint } = v as Record<string, unknown>
+  if (typeof screen !== 'number') return null
+  return { screen, pushed: pushed === true, checkpoint: CHECKPOINT_STEPS.find(s => s === checkpoint) }
 }
 
 /** いまの履歴に印を付け直す（履歴は増やさない）。Next.js が使う中身は Next.js 側で引き継がれる */
@@ -130,9 +139,12 @@ function QuizInner() {
   const latest = useRef<Answers>(init.a)
   const [screen, setScreen] = useState(init.s)
   const [resumed, setResumed] = useState(init.resumed)
+  /** 途中経過を出しているときは、どの STEP を答え終えた後か。出していなければ null */
+  const [checkpoint, setCheckpoint] = useState<StepNo | null>(null)
   // 画面が変わったときにフォーカスを移す先（設問の見出し。無い画面では STEP の見出し）
   const stepHeading = useRef<HTMLHeadingElement>(null)
   const screenHeading = useRef<HTMLHeadingElement>(null)
+  const checkpointHeading = useRef<HTMLHeadingElement>(null)
 
   // 掃除で答えが変わったときは保存し直し、前の結果を消す
   useEffect(() => {
@@ -161,6 +173,8 @@ function QuizInner() {
       const unanswered = firstUnansweredScreen(a)
       const i = normalizeScreen(unanswered === null ? mark.screen : Math.min(mark.screen, unanswered), a)
       if (i !== mark.screen) markHistory(i)
+      // 途中経過の履歴へ戻ってきたら、途中経過を出し直す（答えを変えて画面がずれたときは出さない）
+      setCheckpoint(i === mark.screen ? (mark.checkpoint ?? null) : null)
       setScreen(i)
       store.setScreen(i)
       window.scrollTo({ top: 0 })
@@ -171,6 +185,7 @@ function QuizInner() {
 
   /** 画面を移す。push は履歴を1つ足す（「次へ」）、replace はいまの履歴を書き換える */
   function move(i: number, how: 'push' | 'replace') {
+    setCheckpoint(null)
     setScreen(i)
     store.setScreen(i)
     if (how === 'push') window.history.pushState({ [HISTORY_KEY]: { screen: i, pushed: true } satisfies HistoryMark }, '')
@@ -196,6 +211,20 @@ function QuizInner() {
   }
 
   function goNext() {
+    const i = nextScreen(screen, latest.current)
+    const step = SCREENS[screen].step
+    if (i !== null && CHECKPOINT_STEPS.includes(step) && SCREENS[i].step !== step) {
+      // STEP を答え終えたら、次の STEP の前に途中経過を出す。履歴を1つ足して、ブラウザの「戻る」で設問に戻れるようにする
+      setCheckpoint(step)
+      window.history.pushState({ [HISTORY_KEY]: { screen, pushed: true, checkpoint: step } satisfies HistoryMark }, '')
+      window.scrollTo({ top: 0 })
+      return
+    }
+    if (i === null) router.push('/result')
+    else move(i, 'push')
+  }
+
+  function continueFromCheckpoint() {
     const i = nextScreen(screen, latest.current)
     if (i === null) router.push('/result')
     else move(i, 'push')
@@ -227,18 +256,22 @@ function QuizInner() {
   // 画面が変わったら、新しい画面の見出しへフォーカスを移す
   // （キーボード・読み上げソフトで、どこを読んでいるか迷子にならないように）。最初の表示では動かさない
   const shownScreen = useRef(screen)
+  const shownCheckpoint = useRef(checkpoint)
   useEffect(() => {
-    if (shownScreen.current === screen) return
+    if (shownScreen.current === screen && shownCheckpoint.current === checkpoint) return
     shownScreen.current = screen
-    const target = screenHeading.current ?? stepHeading.current
+    shownCheckpoint.current = checkpoint
+    const target = checkpoint !== null ? checkpointHeading.current : (screenHeading.current ?? stepHeading.current)
     target?.focus({ preventScroll: true })
-  }, [screen])
+  }, [screen, checkpoint])
 
   // 進み具合：いまの答えで出る画面の数
   const visible = SCREENS.map((_, i) => i).filter(i => hasQuestions(i, answers))
   const total = visible.length
   const position = visible.indexOf(screen) + 1
   const minutesLeft = Math.max(1, Math.ceil(((total - position) * SECONDS_PER_SCREEN) / 60))
+  /** この画面より後に残っている質問の数（途中経過の「あと◯問」） */
+  const questionsLeft = visible.filter(i => i > screen).reduce((n, i) => n + SCREENS[i].questions(answers).length, 0)
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-36">
@@ -264,61 +297,115 @@ function QuizInner() {
         </div>
       </div>
 
-      {resumed && (
-        <div className="notice mt-2 flex flex-wrap items-center justify-between gap-2">
-          <span>前回の続きから再開しています。</span>
-          <button type="button" className="btn-text" onClick={restart}>はじめからやり直す</button>
-        </div>
-      )}
+      {checkpoint !== null ? (
+        <Checkpoint
+          step={checkpoint}
+          answers={answers}
+          questionsLeft={questionsLeft}
+          headingRef={checkpointHeading}
+          onContinue={continueFromCheckpoint}
+        />
+      ) : (
+        <>
+          {resumed && (
+            <div className="notice mt-2 flex flex-wrap items-center justify-between gap-2">
+              <span>前回の続きから再開しています。</span>
+              <button type="button" className="btn-text" onClick={restart}>はじめからやり直す</button>
+            </div>
+          )}
 
-      <p className="mt-5 text-sm text-sub">{STEPS[step].lead}</p>
+          <p className="mt-5 text-sm text-sub">{STEPS[step].lead}</p>
 
-      <div className="mt-4 flex flex-col gap-9">
-        {questions[0]?.kind === 'slider' ? (
-          <section className="flex flex-col gap-3">
-            <h2 ref={screenHeading} tabIndex={-1} className="text-lg">どちらに近いですか？</h2>
-            {questions.map(q =>
-              q.kind === 'slider' ? (
-                <SliderScale key={q.id} q={q} value={answers[q.id] as number | undefined} onChange={v => update(q.id, v)} />
-              ) : null,
-            )}
-          </section>
-        ) : (
-          questions.map((q, qi) =>
-            q.kind === 'choice' ? (
-              <section key={q.id} className="flex flex-col gap-3">
-                <h2
-                  id={`${q.id}-label`}
-                  ref={qi === 0 ? screenHeading : undefined}
-                  tabIndex={qi === 0 ? -1 : undefined}
-                  className="text-lg"
-                >
-                  {q.title}
-                </h2>
-                <p className="-mt-2 text-xs text-sub">{choiceHint(q.max, (answers[q.id] as string[] | undefined)?.length ?? 0)}</p>
-                {q.note && <p className="notice -mt-1 !py-2.5 text-xs">{q.note}</p>}
-                <ChoiceGroup
-                  labelId={`${q.id}-label`}
-                  options={q.options}
-                  max={q.max}
-                  noneId={q.noneId}
-                  value={(answers[q.id] as string[] | undefined) ?? []}
-                  // 選んでも自動では進まない。選び直してから「次へ」で進む
-                  onChange={v => update(q.id, v)}
-                />
+          <div className="mt-4 flex flex-col gap-9">
+            {questions[0]?.kind === 'slider' ? (
+              <section className="flex flex-col gap-3">
+                <h2 ref={screenHeading} tabIndex={-1} className="text-lg">どちらに近いですか？</h2>
+                {questions.map(q =>
+                  q.kind === 'slider' ? (
+                    <SliderScale key={q.id} q={q} value={answers[q.id] as number | undefined} onChange={v => update(q.id, v)} />
+                  ) : null,
+                )}
               </section>
-            ) : null,
-          )
-        )}
-      </div>
+            ) : (
+              questions.map((q, qi) =>
+                q.kind === 'choice' ? (
+                  <section key={q.id} className="flex flex-col gap-3">
+                    <h2
+                      id={`${q.id}-label`}
+                      ref={qi === 0 ? screenHeading : undefined}
+                      tabIndex={qi === 0 ? -1 : undefined}
+                      className="text-lg"
+                    >
+                      {q.title}
+                    </h2>
+                    <p className="-mt-2 text-xs text-sub">{choiceHint(q.max, (answers[q.id] as string[] | undefined)?.length ?? 0)}</p>
+                    {q.note && <p className="notice -mt-1 !py-2.5 text-xs">{q.note}</p>}
+                    <ChoiceGroup
+                      labelId={`${q.id}-label`}
+                      options={q.options}
+                      max={q.max}
+                      noneId={q.noneId}
+                      value={(answers[q.id] as string[] | undefined) ?? []}
+                      // 選んでも自動では進まない。選び直してから「次へ」で進む
+                      onChange={v => update(q.id, v)}
+                    />
+                  </section>
+                ) : null,
+              )
+            )}
+          </div>
 
-      <BottomBar hint={canNext ? undefined : `すべての質問に答えると「${isLast ? '結果を見る' : '次へ'}」が押せます`}>
-        <button type="button" className="btn-secondary" onClick={goBack}>戻る</button>
-        <button type="button" className="btn-primary flex-1 sm:flex-none sm:min-w-48" disabled={!canNext} onClick={goNext}>
-          {isLast ? '結果を見る' : '次へ'}
-        </button>
-      </BottomBar>
+          <BottomBar hint={canNext ? undefined : `すべての質問に答えると「${isLast ? '結果を見る' : '次へ'}」が押せます`}>
+            <button type="button" className="btn-secondary" onClick={goBack}>戻る</button>
+            <button type="button" className="btn-primary flex-1 sm:flex-none sm:min-w-48" disabled={!canNext} onClick={goNext}>
+              {isLast ? '結果を見る' : '次へ'}
+            </button>
+          </BottomBar>
+        </>
+      )}
     </div>
+  )
+}
+
+/**
+ * 途中経過（チェックポイント）。描きかけの六角形と、いちばん高い力の一言だけを見せる。
+ * 結果の文面と申し込みのボタンは置かない。ボタンは「続きを答える」の1つだけで、結果画面の申し込みボタン（オレンジの塗り）とは見た目を変える
+ */
+function Checkpoint({
+  step, answers, questionsLeft, headingRef, onContinue,
+}: {
+  step: StepNo
+  answers: Answers
+  questionsLeft: number
+  headingRef: React.RefObject<HTMLHeadingElement | null>
+  onContinue: () => void
+}) {
+  const scores = radarScores(answers)
+  const shown = axesShownAfter(step)
+  const top = strongestAxis(scores, shown)
+  return (
+    <>
+      <section className="card mt-6 flex flex-col items-center px-5 py-7 text-center">
+        <p className="eyebrow justify-center">途中経過</p>
+        <h2 ref={headingRef} tabIndex={-1} className="mt-3 text-xl">
+          診断はまだ続きます。あと{questionsLeft}問
+        </h2>
+        <RadarChart axes={scores} shown={shown} className="mt-4 w-full max-w-[300px]" />
+        <p className="mt-1 text-sm font-bold tabular-nums">完成度 {shown.length}/6</p>
+        <div aria-hidden className="mt-2 h-1.5 w-full max-w-[240px] overflow-hidden rounded-full bg-well">
+          <div className="h-full rounded-full bg-brand" style={{ width: `${(shown.length / 6) * 100}%` }} />
+        </div>
+        <p className="mt-6 leading-relaxed">
+          いまのところ、いちばん高いのは「{top.label}」。{top.line}
+        </p>
+        <p className="mt-2 text-xs text-sub">
+          {shown.length === 5 ? '最後の1つの力は、結果画面でそろいます。' : `残りの${6 - shown.length}つの力は、この先の質問で見えてきます。`}
+        </p>
+      </section>
+      <BottomBar>
+        <button type="button" className="btn-secondary w-full" onClick={onContinue}>続きを答える</button>
+      </BottomBar>
+    </>
   )
 }
 

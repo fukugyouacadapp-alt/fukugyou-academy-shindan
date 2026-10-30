@@ -133,7 +133,7 @@ const q1 = choice({
   id: 'q1', no: '1', step: 1, max: 1,
   title: 'いまの仕事に近いのは？',
   labels: JOB_FAMILIES.map(f => f.label),
-  note: 'ぴったりのものがなければ、いちばん近いものを選んでください。いま働いていない人は、これまでの仕事で選べます。',
+  note: 'ぴったりのものがなければ、いちばん近いものを選んでください。いくつかにまたがる仕事なら、時間をいちばん使っているほうで大丈夫です。いま働いていない人は、これまでの仕事で選べます。',
 })
 
 /** 1-2「具体的には？」は、1 で選んだ仕事のタイプごとに別の設問として持つ（IDがぶつからないように q1_2_<番号>） */
@@ -292,6 +292,18 @@ const LABEL_BY_ID: Map<string, string> = new Map(
 
 export function optionLabel(id: string): string | undefined {
   return LABEL_BY_ID.get(id)
+}
+
+/** 選択肢の文言からIDを引く（文言を変えたときに、ここで気づけるよう見つからなければ止める） */
+export function idOf(q: ChoiceQuestion, label: string): string {
+  const option = q.options.find(o => o.label === label)
+  if (!option) throw new Error(`${q.no} に「${label}」がありません`)
+  return option.id
+}
+
+/** 文言ごとの値を、IDごとの表に置き換える */
+export function byLabel<T>(q: ChoiceQuestion, table: Record<string, T>): Record<string, T> {
+  return Object.fromEntries(Object.entries(table).map(([label, value]) => [idOf(q, label), value]))
 }
 
 /** STEP5 の答えを「向いている理由」で引用するときの言い回し（{x} 入り）。設問IDから引く */

@@ -1,9 +1,10 @@
 import { FAMILIES } from '@/data/catalog'
 import type { Job } from '@/data/catalog/types'
 import {
-  deepCite, deepQuestion, detailQuestion, optionLabel, pickMarketAxes, Q,
+  byLabel, deepCite, deepQuestion, detailQuestion, idOf, optionLabel, pickMarketAxes, Q,
   type Answers, type ChoiceQuestion,
 } from '@/data/questions'
+import { directionOf, radarScores } from '@/lib/radar'
 import type { DiagnosisResult, Recommendation } from '@/lib/schemas'
 
 /**
@@ -13,18 +14,6 @@ import type { DiagnosisResult, Recommendation } from '@/lib/schemas'
  * 決まりごと（docs/02-result-rules.md）：顕在型2つ・潜在型1つの3件／理由は回答の引用2つ以上／
  * 使える時間が週3時間未満なら毎週の定例が要る仕事を出さない／「将来の独立に備えたい」なら月額継続を1つ以上
  */
-
-/** 選択肢の文言からIDを引く（文言を変えたときに、ここで気づけるよう見つからなければ止める） */
-function idOf(q: ChoiceQuestion, label: string): string {
-  const option = q.options.find(o => o.label === label)
-  if (!option) throw new Error(`${q.no} に「${label}」がありません`)
-  return option.id
-}
-
-/** 文言ごとの言葉を、IDごとの表に置き換える */
-function byLabel(q: ChoiceQuestion, table: Record<string, string>): Record<string, string> {
-  return Object.fromEntries(Object.entries(table).map(([label, value]) => [idOf(q, label), value]))
-}
 
 const SHORT_TIME = idOf(Q.q7_2, '3時間未満')
 const GOAL = {
@@ -280,6 +269,7 @@ export function diagnose(answers: Answers): DiagnosisResult {
     .slice(0, 4)
   if (kenzaiTags.length === 0) kenzaiTags = [q3.length > 0 ? TAG_Q3[q3[0]] : TAG_Q2[q2]]
 
+  const radar = radarScores(answers)
   const experience = q6.length > 0 ? `仕事の外で${cite(q6[0])}` : null
   const axes = pickMarketAxes(answers)
   const side = (p: number) => (p < 0 ? 'left' : p > 0 ? 'right' : 'mid')
@@ -308,6 +298,8 @@ export function diagnose(answers: Answers): DiagnosisResult {
       axes: axes.map(({ left, right, position }) => ({ left, right, position })),
       comment: axes.map(a => AXIS_COMMENT[a.id]?.[side(a.position)] ?? '').join(''),
     },
+    radar: radar.map(({ id, label, value }) => ({ id, label, value })),
+    direction: directionOf(radar),
     recommendations,
     growth_hint: detail.growth,
     cautions: uniq(

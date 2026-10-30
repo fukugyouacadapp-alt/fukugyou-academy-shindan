@@ -186,7 +186,7 @@ function Centered({ children }: { children: React.ReactNode }) {
   return <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-20 text-center">{children}</div>
 }
 
-const PHASES = ['回答を整理しています', '強みをハッシュタグにしています', '強みが活きる市場を探しています', 'ニッチな複業を3つに絞っています']
+const PHASES = ['回答を整理しています', '強みをハッシュタグにしています', '6つの力を六角形にしています', 'ニッチな複業を3つに絞っています']
 const TICK_MS = READING_MS / PHASES.length
 /** ロゴを囲む輪が満ちるまでの長さ。満ちた輪を一瞬見せてから結果へ切り替える */
 const RING_MS = READING_MS - 300

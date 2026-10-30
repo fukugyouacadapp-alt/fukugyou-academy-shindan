@@ -5,6 +5,7 @@
 複業アカデミーの無料診断サイト。選択式の質問に答えると、強みを #ハッシュタグ にし、ニッチな複業を3つ提案する。
 AIは使わない（2026-10-24 に Gemini をやめた）。用意した文面の部品（`src/data/catalog/`）を、回答に合わせてブラウザの中で組み立てる（`src/lib/diagnose.ts`）。
 仕様は `docs/01-site-build-prompt.md`、結果の組み立て方と文面の決まりは `docs/02-result-rules.md`（`src/data/catalog/types.ts` の決まりと同じ。直すときは両方）。
+複業アカデミー様の要件定義（最新版・2026-10-29）は https://shindan.optima-sail.com/youken 。仕様書と食い違うときは要件定義が正本（2026-10-31 に、途中経過・六角形・結果の一部を伏せる形に合わせた）。
 
 ## ローカル起動ルール（必読）
 
@@ -46,7 +47,10 @@ AIは使わない（2026-10-24 に Gemini をやめた）。用意した文面�
 - 「書いてはいけない言葉」（金額・「稼げる」・資格が必要な仕事など）は、部品を書く段階で `npm run check:results` が見る（`scripts/check-results.ts` の POLICY_PATTERNS）。言い回しを足すときは `docs/02-result-rules.md`「5. 部品の書き方の決まり」とそろえる
 - 画面の文は「複業」と書き、「副業」は使わない（2026-10-26 にそろえた）。例外は部品の keywords（募集サイトで引く検索語。いまは画面に出さない）だけ。部品と組み立てた結果は `npm run check:results` が見る
 - 点検の道具は Node で `src/` の TypeScript をそのまま読む（`scripts/alias-hooks.mjs` が `@/` を読み替える）。`diagnose.ts` から読むファイルに JSX（画面の部品）を入れない
-- 回答・結果はブラウザの sessionStorage にだけ置く。サーバーにもデータベースにも保存しない
+- 結果の六角形（6つの力）と「合う複業の方向」は `src/lib/radar.ts`。STEP2・3・4 の後に途中経過として描きかけで見せるので、それぞれの力は、見せる STEP までの設問だけで決める（`npm run check:results` が確かめる）。決まりは `docs/02-result-rules.md` の7章
+- 結果画面でおすすめの仕事を何件見せるかは `src/lib/site.ts` の `OPEN_JOBS`（いまは 0＝3件とも伏せる。伏せる範囲は要件定義8章の1で未決）。伏せた仕事は、本物の文面を画面に入れず、見本の文をぼかして見せる
+- アカデミー生の事例は `src/data/case-studies.ts`（文面を受け取るまでは空で、結果画面に欄を出さない）
+- 回答・結果はブラウザの sessionStorage にだけ置く。サーバーにもデータベースにも保存しない（講師が結果を受け取る形は、要件定義8章の2で未決）
 - 見た目の決まりごとは `src/app/globals.css` の冒頭と `src/app/tokens.css`（運営会社サイト color-with.com に合わせた値）。色は tokens.css の名前で引き、画面側に #hex を書かない
 - 結果画面のイラスト（`public/illustrations/`、unDraw）とアイコン（`src/components/result/Icon.tsx`、Tabler Icons）は外部の無料素材。利用条件は `public/third-party-licenses.txt`。unDraw は自動での取り込み（curl など）を規約で認めていないので、足すときはサイトのダウンロードボタンから
 

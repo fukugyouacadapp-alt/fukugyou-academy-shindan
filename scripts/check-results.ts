@@ -3,7 +3,7 @@
 //   ONLY=office のように部品のファイル名（talk / plan / office / create / care / field）を付けると、その仕事のタイプだけ点検する。
 //   SAMPLES=50000 で、ためしに組み立てる回答の数を変えられる（既定 20000）。
 // 1. 部品そのものの点検（数・文字数・書き方・書いてはいけない言葉・回答IDの書き間違い）
-// 2. でたらめに作った回答で結果を組み立て、決まりごと（3件・顕在型2/潜在型1・引用・時間の制約）を点検
+// 2. でたらめに作った回答で結果を組み立て、決まりごと（3件・顕在型2/潜在型1・引用・時間の制約・六角形）を点検
 // 3. テスト用4人の結果を .persona-results/ に保存し、要点を表示
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -12,6 +12,7 @@ import type { Family, Job } from '@/data/catalog/types'
 import { activeQuestions, DETAIL_BY_FAMILY, DEEP_BY_DETAIL, JOB_FAMILIES, optionLabel, Q, type Answers } from '@/data/questions'
 import { validateAnswers } from '@/lib/answers'
 import { diagnose } from '@/lib/diagnose'
+import { RADAR_AXES, radarScores } from '@/lib/radar'
 import { resultSchema, type DiagnosisResult } from '@/lib/schemas'
 
 const FILES = ['talk', 'plan', 'office', 'create', 'care', 'field']
@@ -260,6 +261,8 @@ const jobByTitle = FAMILIES.map(f => new Map(jobsOf(f).map(j => [j.title, j])))
 const usage = new Map<string, number>()
 const problemCount = new Map<string, number>()
 const problemExample = new Map<string, string>()
+/** 合う複業の方向ごとの人数（6通りが、ほどよく散らばっているかを見る） */
+const directionCount = new Map<string, number>()
 
 /** 独立の決まりは、月額継続の仕事が無い仕事の内容では守れないことがあるので、「注意」にとどめる */
 const INDEPENDENCE_ISSUE = '将来の独立に備えたい人なのに、月額継続の仕事が無い'
@@ -284,7 +287,17 @@ function inspect(r: DiagnosisResult, a: Answers): string[] {
   }
   const independence = (a.q7_1 as string[])[0] === Q.q7_1.options[2].id
   if (independence && !r.recommendations.some(x => x.contract_style === '月額継続')) issues.push(INDEPENDENCE_ISSUE)
-  const text = [r.nickname, r.nickname_reason, r.summary, r.market.domain_name, r.market.comment].join('\n')
+  // 六角形：並びが RADAR_AXES と同じか。途中経過で見せた力が、あとの答えで変わらないか
+  // （それぞれの力を、見せる STEP までの設問だけで組み立て直して、最後の値と比べる）
+  if (r.radar.map(p => p.id).join() !== RADAR_AXES.map(x => x.id).join()) issues.push('六角形の並びが RADAR_AXES と違う')
+  const stepOf = new Map(activeQuestions(a).map(q => [q.id, q.step]))
+  for (const axis of RADAR_AXES) {
+    const partial = Object.fromEntries(Object.entries(a).filter(([id]) => (stepOf.get(id) ?? 9) <= axis.step))
+    const early = radarScores(partial).find(p => p.id === axis.id)?.value
+    const final = r.radar.find(p => p.id === axis.id)?.value
+    if (early !== final) issues.push(`六角形の「${axis.label}」が、途中経過（STEP${axis.step}の後）と結果で違う`)
+  }
+  const text = [r.nickname, r.nickname_reason, r.summary, r.market.domain_name, r.market.comment, r.direction.name, r.direction.text].join('\n')
   if (/undefined|null|\{x\}/.test(text) || /undefined/.test(JSON.stringify(r))) issues.push('文面に undefined などが混じっている')
   // 組み立てた文（diagnose.ts が足す言い回しも含む）。結果には keywords が入らないので、まるごと見てよい
   if (JSON.stringify(r).includes('副業')) issues.push('文面に「副業」が混じっている（「複業」と書く）')
@@ -309,6 +322,7 @@ if (ready.length > 0) {
       break
     }
     built++
+    directionCount.set(r.direction.name, (directionCount.get(r.direction.name) ?? 0) + 1)
     for (const rec of r.recommendations) usage.set(`${i}:${rec.job_title}`, (usage.get(`${i}:${rec.job_title}`) ?? 0) + 1)
     for (const issue of inspect(r, checked.value)) {
       const key = issue.replace(/「[^」]*」/g, '「…」')
@@ -412,7 +426,7 @@ for (const [n, p] of personas.entries()) {
   console.log(`  二つ名「${r.nickname}」 confidence=${r.confidence}`)
   console.log(`  タグ: ${r.strength_tags.join(' ')}`)
   console.log(`  3層: 本業 ${r.skill_map.hongyo.join(' ')} ／ 顕在型 ${r.skill_map.kenzai.join(' ')} ／ 潜在型 ${r.skill_map.senzai.join(' ')}`)
-  console.log(`  市場: ${r.market.domain_name}`)
+  console.log(`  6つの力: ${r.radar.map(p => `${p.label}${p.value}`).join(' ')} → 方向「${r.direction.name}」`)
   for (const rec of r.recommendations) {
     console.log(`  No.${rec.rank} [${rec.layer}] ${rec.job_title}  ${rec.combo.join('×')}  活用${rec.fit} ${rec.market_need} ${rec.contract_style}`)
     console.log(`       理由: ${rec.why_you}`)
@@ -429,6 +443,10 @@ if (ready.length < targets.length) {
   console.log(`部品がまだ揃っていないので、結果の組み立ては飛ばした: ${waiting.join(', ')}`)
 }
 console.log(`組み立てた結果: ${built}通り（${ready.map(({ i }) => FILES[i]).join(', ') || 'なし'}）`)
+if (built > 0) {
+  const spread = [...directionCount].sort((x, y) => y[1] - x[1]).map(([name, n]) => `${name} ${Math.round((n / built) * 100)}%`)
+  console.log(`合う複業の方向: ${spread.join(' ／ ')}`)
+}
 if (warnings.length > 0) {
   console.log(`\n注意 ${warnings.length}件（直さなくても動くが、見直すとよい）`)
   for (const w of warnings.slice(0, 60)) console.log(`  - ${w}`)

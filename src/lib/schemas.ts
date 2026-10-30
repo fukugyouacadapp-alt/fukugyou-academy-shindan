@@ -46,6 +46,10 @@ export const resultSchema = z.object({
     axes: z.array(z.object({ left: text(20), right: text(20), position: z.int().min(-2).max(2) })).length(2),
     comment: text(200),
   }),
+  /** 強みの六角形（6つの力。1〜5）。並びは src/lib/radar.ts の RADAR_AXES と同じ */
+  radar: z.array(z.object({ id: text(10), label: text(10), value: z.int().min(1).max(5) })).length(6),
+  /** 合う複業の方向（いちばん高い力で決める） */
+  direction: z.object({ name: text(20), text: text(120) }),
   recommendations: z.array(recommendationSchema).length(3),
   growth_hint: text(150),
   cautions: z.array(text(200)).max(5),
