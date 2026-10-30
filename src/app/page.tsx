@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome'
-import { OPERATOR } from '@/lib/site'
 
-/** トップは見出しとはじめるボタンだけ（説明は診断の画面に任せる。結果の見本へのリンクは 2026-10-25 に外した）。運営者と回答の扱いの1行は 2026-10-31 に足した */
+/** トップは見出しとはじめるボタンだけ（説明は診断の画面に任せる。結果の見本へのリンクは 2026-10-25 に外した）。運営者と回答の扱いの1行は 2026-10-31 に足したが、同じ日に外した（運営者と回答の扱いはフッターから） */
 export default function Home() {
   return (
     <>
@@ -16,8 +15,6 @@ export default function Home() {
             <span className="inline-block">複業がわかる</span>
           </h1>
           <p className="mt-5 text-[1.05rem]">選ぶだけ約3分・無料・登録不要</p>
-          {/* 運営者と回答の扱いを1行で（要件定義 R6。怪しまれないように）。くわしくはフッターの「回答の取り扱い」 */}
-          <p className="mt-3 text-xs text-sub">運営：{OPERATOR}／回答は外に送らず、保存もしません</p>
           <Link href="/shindan" className="btn-start mt-11 w-full sm:w-auto">
             <span className="btn-start__badge">かんたん約3分</span>
             無料診断スタート
