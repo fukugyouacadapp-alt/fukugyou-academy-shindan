@@ -11,12 +11,19 @@ import type { Answers } from '@/data/questions'
 import { buildSample } from '@/data/sample-result'
 import { highlightLabels, jobFamilyIndex, pickedLabels, validateAnswers } from '@/lib/answers'
 import { diagnose } from '@/lib/diagnose'
+import { encodeResultCode } from '@/lib/result-code'
 import type { DiagnosisResult } from '@/lib/schemas'
 import { store, useHydrated } from '@/lib/storage'
 import { ResultView } from './ResultView'
 
-/** 結果と一緒に画面へ渡すもの（選んだ回答の文言・仕事のタイプの番号） */
-type Extras = { highlights: string[]; family: number | null }
+/** 結果と一緒に画面へ渡すもの（選んだ回答の文言・仕事のタイプの番号・診断番号） */
+type Extras = { highlights: string[]; family: number | null; code?: string }
+
+/** 保存されていた回答から診断番号をつくる（回答が崩れていたら番号は出さない） */
+function codeOf(answers: Answers | null): string | undefined {
+  const checked = answers ? validateAnswers(answers) : null
+  return checked?.ok ? encodeResultCode(checked.value) : undefined
+}
 
 type State =
   | ({ kind: 'sample'; result: DiagnosisResult } & Extras)
@@ -51,7 +58,15 @@ function ResultInner() {
     }
     const answers = store.answers()
     const saved = store.result()
-    if (saved) return { kind: 'done', result: saved, highlights: answers ? highlightLabels(answers) : [], family: answers ? jobFamilyIndex(answers) : null }
+    if (saved) {
+      return {
+        kind: 'done',
+        result: saved,
+        highlights: answers ? highlightLabels(answers) : [],
+        family: answers ? jobFamilyIndex(answers) : null,
+        code: codeOf(answers),
+      }
+    }
     if (!answers || Object.keys(answers).length === 0) return { kind: 'empty' }
     // 途中までしか答えていない（結果のURLを直接開いた など）ときは、続きへ案内する
     const unanswered = firstUnansweredScreen(answers)
@@ -65,6 +80,7 @@ function ResultInner() {
         result: diagnose(checked.value),
         highlights: highlightLabels(checked.value),
         family: jobFamilyIndex(checked.value),
+        code: encodeResultCode(checked.value),
       }
     } catch (e) {
       console.error('[result]', e instanceof Error ? e.message : e)
@@ -84,7 +100,7 @@ function ResultInner() {
       track('diagnosis_complete', { confidence: init.result.confidence })
     }
     const id = window.setTimeout(() => {
-      setState({ kind: 'done', result: init.result, highlights: init.highlights, family: init.family })
+      setState({ kind: 'done', result: init.result, highlights: init.highlights, family: init.family, code: init.code })
       window.scrollTo({ top: 0 })
     }, READING_MS)
     return () => window.clearTimeout(id)
@@ -145,6 +161,7 @@ function ResultInner() {
         result={state.result}
         highlights={state.highlights}
         family={state.family}
+        code={state.code}
         banner={
           <div className="notice notice--wait flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span>これは結果の見本です（人事・採用の仕事をしている方の回答例）。</span>
@@ -162,6 +179,7 @@ function ResultInner() {
       result={result}
       highlights={state.highlights}
       family={state.family}
+      code={state.code}
       banner={
         result.confidence === 'low' ? (
           <div className="notice notice--wait">

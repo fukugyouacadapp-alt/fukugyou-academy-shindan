@@ -1,15 +1,8 @@
 'use client'
 
-import { SLIDER_VALUES, type SliderQuestion } from '@/data/questions'
+import { SLIDER_VALUES, sliderLabel, type SliderQuestion } from '@/data/questions'
 
 const SIZES: Record<number, number> = { [-2]: 40, [-1]: 32, 0: 24, 1: 32, 2: 40 }
-
-/** 読み上げ用の名前。画面を見ていない人にも中身が伝わるよう、左右の文言そのものを入れる */
-function nameOf(q: SliderQuestion, v: number): string {
-  if (v === 0) return 'どちらともいえない'
-  const side = v < 0 ? q.left : q.right
-  return Math.abs(v) === 2 ? `${side}に、とても近い` : `${side}に近い`
-}
 
 /**
  * 5段階のスライダー（中身は押しボタン5つ。選んだものが「押された状態」として読み上げられる。
@@ -34,7 +27,7 @@ export function SliderScale({ q, value, onChange }: { q: SliderQuestion; value: 
               key={v}
               type="button"
               aria-pressed={on}
-              aria-label={nameOf(q, v)}
+              aria-label={sliderLabel(q, v)}
               onClick={() => onChange(v)}
               className="grid h-11 w-11 place-items-center rounded-full"
             >

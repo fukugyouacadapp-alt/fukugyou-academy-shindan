@@ -1,6 +1,7 @@
 import type { Answers } from '@/data/questions'
 import { highlightLabels, jobFamilyIndex } from '@/lib/answers'
 import { diagnose } from '@/lib/diagnose'
+import { encodeResultCode } from '@/lib/result-code'
 import type { DiagnosisResult } from '@/lib/schemas'
 
 /**
@@ -25,9 +26,14 @@ const SAMPLE_ANSWERS: Answers = {
 }
 
 /**
- * 見本の結果と「あなたが選んだ回答から」。見本を開いたときだけ組み立てる
+ * 見本の結果と「あなたが選んだ回答から」・診断番号。見本を開いたときだけ組み立てる
  * （読み込みのたびに組み立てると、失敗したときに本物の結果ページまで開けなくなるため）
  */
-export function buildSample(): { result: DiagnosisResult; highlights: string[]; family: number | null } {
-  return { result: diagnose(SAMPLE_ANSWERS), highlights: highlightLabels(SAMPLE_ANSWERS), family: jobFamilyIndex(SAMPLE_ANSWERS) }
+export function buildSample(): { result: DiagnosisResult; highlights: string[]; family: number | null; code: string } {
+  return {
+    result: diagnose(SAMPLE_ANSWERS),
+    highlights: highlightLabels(SAMPLE_ANSWERS),
+    family: jobFamilyIndex(SAMPLE_ANSWERS),
+    code: encodeResultCode(SAMPLE_ANSWERS),
+  }
 }

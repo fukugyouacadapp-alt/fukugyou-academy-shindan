@@ -214,6 +214,13 @@ const sliders = [
 
 export const SLIDER_VALUES = [-2, -1, 0, 1, 2] as const
 
+/** スライダーの答えを言葉にする（読み上げと、講師用のページの回答一覧に使う）。画面を見ていない人にも中身が伝わるよう、左右の文言そのものを入れる */
+export function sliderLabel(q: SliderQuestion, v: number): string {
+  if (v === 0) return 'どちらともいえない'
+  const side = v < 0 ? q.left : q.right
+  return Math.abs(v) === 2 ? `${side}に、とても近い` : `${side}に近い`
+}
+
 // ── STEP5 最後に、もう少しだけ ──────────────────────────────
 
 /** 「どれも当てはまらない」を選んでも診断はできる（提案が少し大まかになるだけ） */

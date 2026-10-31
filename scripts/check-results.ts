@@ -3,7 +3,7 @@
 //   ONLY=office のように部品のファイル名（talk / plan / office / create / care / field）を付けると、その仕事のタイプだけ点検する。
 //   SAMPLES=50000 で、ためしに組み立てる回答の数を変えられる（既定 20000）。
 // 1. 部品そのものの点検（数・文字数・書き方・書いてはいけない言葉・回答IDの書き間違い）
-// 2. でたらめに作った回答で結果を組み立て、決まりごと（3件・顕在型2/潜在型1・引用・時間の制約・六角形）を点検
+// 2. でたらめに作った回答で結果を組み立て、決まりごと（3件・顕在型2/潜在型1・引用・時間の制約・六角形・診断番号）を点検
 // 3. テスト用4人の結果を .persona-results/ に保存し、要点を表示
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -13,6 +13,7 @@ import { activeQuestions, DETAIL_BY_FAMILY, DEEP_BY_DETAIL, JOB_FAMILIES, option
 import { validateAnswers } from '@/lib/answers'
 import { diagnose } from '@/lib/diagnose'
 import { RADAR_AXES, radarScores } from '@/lib/radar'
+import { decodeResultCode, encodeResultCode } from '@/lib/result-code'
 import { resultSchema, type DiagnosisResult } from '@/lib/schemas'
 
 const FILES = ['talk', 'plan', 'office', 'create', 'care', 'field']
@@ -297,6 +298,10 @@ function inspect(r: DiagnosisResult, a: Answers): string[] {
     const final = r.radar.find(p => p.id === axis.id)?.value
     if (early !== final) issues.push(`六角形の「${axis.label}」が、途中経過（STEP${axis.step}の後）と結果で違う`)
   }
+  // 診断番号：番号にして戻すと、元の回答（選んだ順も）とそっくり同じになるか。講師用のページで同じ結果を作り直せることの確かめ
+  const decoded = decodeResultCode(encodeResultCode(a))
+  if (!decoded.ok) issues.push(`診断番号から回答に戻せない（${decoded.error}）`)
+  else if (JSON.stringify(decoded.answers) !== JSON.stringify(a)) issues.push('診断番号から戻した回答が、元の回答と違う')
   const text = [r.nickname, r.nickname_reason, r.summary, r.market.domain_name, r.market.comment, r.direction.name, r.direction.text].join('\n')
   if (/undefined|null|\{x\}/.test(text) || /undefined/.test(JSON.stringify(r))) issues.push('文面に undefined などが混じっている')
   // 組み立てた文（diagnose.ts が足す言い回しも含む）。結果には keywords が入らないので、まるごと見てよい

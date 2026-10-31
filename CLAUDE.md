@@ -30,6 +30,7 @@ AIは使わない（2026-10-24 に Gemini をやめた）。用意した文面�
 - 本番URL: https://fukugyou-academy-shindan.vercel.app （Vercel のチーム haikiekis-projects ／ プロジェクト fukugyou-academy-shindan。2026-10-25 に初公開）
 - GitHub にはつないでいない。公開はこのフォルダから `vercel deploy --prod --yes --scope haikiekis-projects`（Vercel 側で組み立てるので、このPCのメモリはほぼ使わない）。送らないファイルは `.vercelignore`
 - 環境変数は Vercel の設定画面か `vercel env add <名前> production --scope haikiekis-projects --project fukugyou-academy-shindan`（値は標準入力で渡す）。`NEXT_PUBLIC_` で始まる値は組み立てのときに埋め込まれるので、変えたら公開し直す
+- 講師用のページ（`/staff`）のパスワードは `STAFF_PASSWORD`（`NEXT_PUBLIC_` ではないので画面には埋め込まれない。変えたら公開し直す）。未設定だと講師用のページは誰も開けない
 - いま入っているのは `NEXT_PUBLIC_SITE_URL`（本番URL）だけ。面談の申し込みURL `NEXT_PUBLIC_CTA_URL` は未設定（ボタンの代わりに「申し込み先は準備中です」が出る）
 - Claude の Vercel MCP には、このプロジェクトの設定・環境変数を変える権限がない（403）。CLI（`vercel api` / `vercel env`）を使う
 
@@ -49,6 +50,7 @@ AIは使わない（2026-10-24 に Gemini をやめた）。用意した文面�
 - 点検の道具は Node で `src/` の TypeScript をそのまま読む（`scripts/alias-hooks.mjs` が `@/` を読み替える）。`diagnose.ts` から読むファイルに JSX（画面の部品）を入れない
 - 結果の六角形（6つの力）と「合う複業の方向」は `src/lib/radar.ts`。STEP2・3・4 の後に途中経過として描きかけで見せるので、それぞれの力は、見せる STEP までの設問だけで決める（`npm run check:results` が確かめる）。決まりは `docs/02-result-rules.md` の7章
 - 結果画面でおすすめの仕事を何件見せるかは `src/lib/site.ts` の `OPEN_JOBS`（いまは 0＝3件とも伏せる。伏せる範囲は要件定義8章の1で未決）。伏せた仕事は、本物の文面を画面に入れず、見本の文をぼかして見せる
+- 診断番号は `src/lib/result-code.ts`（回答を11文字にしたもの。講師が `/staff` で結果を作り直すのに使う。パスワードは `src/proxy.ts`）。設問の選択肢の数・選べる数を変えると番号の版が自動で変わり、古い番号ははじかれる。くわしくは `docs/01-site-build-prompt.md` 5章の「講師用のページ」
 - アカデミー生の事例は `src/data/case-studies.ts`（文面を受け取るまでは空で、結果画面に欄を出さない）
 - 回答・結果はブラウザの sessionStorage にだけ置く。サーバーにもデータベースにも保存しない（講師が結果を受け取る形は、要件定義8章の2で未決）
 - 見た目の決まりごとは `src/app/globals.css` の冒頭と `src/app/tokens.css`（運営会社サイト color-with.com に合わせた値）。色は tokens.css の名前で引き、画面側に #hex を書かない
