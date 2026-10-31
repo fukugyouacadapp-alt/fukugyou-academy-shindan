@@ -16,6 +16,7 @@ type Props = {
  * 選択肢の札。どの設問も「押すと選ばれる／もう一度押すと外れる」トグルとして読み上げられるようにしてある
  * （ラジオの役割を名乗ると矢印キーでの移動が要るので、名乗らない）。
  * 「特にない」は他と一緒に選べない。上限に達したら、残りの札は押せなくする。
+ * 札は縦に1列、横幅いっぱいに並べる（スマホで押しやすく、読む順が迷わないように。2026-10-31 に、横に詰めて折り返す形から変えた）。
  */
 export function ChoiceGroup({ labelId, options, max, noneId, value, onChange }: Props) {
   const single = max === 1
@@ -51,8 +52,8 @@ export function ChoiceGroup({ labelId, options, max, noneId, value, onChange }: 
   // 「特にない」は長い選択肢の末尾に埋もれないよう、線で区切って別の行に置く
   return (
     <div role="group" aria-labelledby={labelId}>
-      <div className="flex flex-wrap gap-2">{options.filter(o => o.id !== noneId).map(button)}</div>
-      {none && <div className="mt-3 border-t border-dashed border-line pt-3">{button(none)}</div>}
+      <div className="flex flex-col gap-2">{options.filter(o => o.id !== noneId).map(button)}</div>
+      {none && <div className="mt-3 flex flex-col border-t border-dashed border-line pt-3">{button(none)}</div>}
     </div>
   )
 }

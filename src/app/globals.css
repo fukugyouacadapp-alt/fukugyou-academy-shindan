@@ -209,10 +209,11 @@ button {
 
   /* ── 選択肢：押しやすい角丸の札。選ぶと塗られる ── */
   .choice {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    min-height: 44px;
-    padding: 9px 16px;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 16px;
     border: 1px solid var(--color-rule-strong);
     border-radius: var(--radius-sm);
     background: var(--color-surface);
