@@ -285,7 +285,7 @@ function inspect(r: DiagnosisResult, a: Answers): string[] {
     if (rec.layer === '潜在型' && !rec.combo.some(t => r.skill_map.senzai.includes(t))) issues.push('潜在型に潜在型のタグがない')
     if (short && jobByTitle[familyIndex]?.get(rec.job_title)?.regular) issues.push('週3時間未満なのに、毎週の定例が要る仕事が出ている')
   }
-  const independence = (a.q7_1 as string[])[0] === Q.q7_1.options[2].id
+  const independence = (a.q7_1 as string[]).includes(Q.q7_1.options[2].id)
   if (independence && !r.recommendations.some(x => x.contract_style === '月額継続')) issues.push(INDEPENDENCE_ISSUE)
   // 六角形：並びが RADAR_AXES と同じか。途中経過で見せた力が、あとの答えで変わらないか
   // （それぞれの力を、見せる STEP までの設問だけで組み立て直して、最後の値と比べる）

@@ -160,7 +160,8 @@ export function diagnose(answers: Answers): DiagnosisResult {
   const q3 = picks(answers, Q.q3)
   const q4 = picks(answers, Q.q4)[0]
   const q6 = picks(answers, Q.q6)
-  const goal = picks(answers, Q.q7_1)[0]
+  // かなえたいことは2つまで選べる。選んだものの効き目は、どれも足す
+  const goals = new Set(picks(answers, Q.q7_1))
   const short = picks(answers, Q.q7_2)[0] === SHORT_TIME
   const picked = new Set([q2, ...q3, q4, ...picks(answers, Q.q5), ...q6])
   const lean = { b2c: sliderValue(answers, 'q8_1'), stage: sliderValue(answers, 'q8_2'), term: sliderValue(answers, 'q8_3') }
@@ -185,9 +186,9 @@ export function diagnose(answers: Answers): DiagnosisResult {
     // 単発か継続か：月額継続は継続側、単発納品は単発側。時間単価・成果報酬はどちらとも決まらないので動かさない
     const term = job.contract === '月額継続' ? 1 : job.contract === '単発納品' ? -1 : 0
     s += LEAN * term * lean.term
-    if (goal === GOAL.income) s += job.market === '◎ 案件多数' ? 2 : job.market === '○ 案件あり' ? 1 : 0
-    if (goal === GOAL.independence && job.contract === '月額継続') s += 1.5
-    if (goal === GOAL.social && job.social) s += 2
+    if (goals.has(GOAL.income)) s += job.market === '◎ 案件多数' ? 2 : job.market === '○ 案件あり' ? 1 : 0
+    if (goals.has(GOAL.independence) && job.contract === '月額継続') s += 1.5
+    if (goals.has(GOAL.social) && job.social) s += 2
     return s
   }
 
@@ -205,7 +206,7 @@ export function diagnose(answers: Answers): DiagnosisResult {
   // 潜在型：仕事の外の経験ごとの部品から1つ（経験を2つ選んだ人は、それぞれのいちばん上を比べて点数の高いほう）。
   // 経験が「特にない」なら本業の延長から
   const hiddenBonus = (experience: string) => (job: Job) =>
-    (job.details?.includes(detailIndex + 1) ? 3 : 0) + (goal === GOAL.favorite && FAVORITE_EXPERIENCES.has(experience) ? 2 : 0)
+    (job.details?.includes(detailIndex + 1) ? 3 : 0) + (goals.has(GOAL.favorite) && FAVORITE_EXPERIENCES.has(experience) ? 2 : 0)
   const senzai: Pick[] = q6
     .slice(0, 2)
     .map(exp => rank(family.hidden[exp as keyof typeof family.hidden] ?? [], '潜在型', hiddenBonus(exp), exp)[0])
@@ -216,7 +217,7 @@ export function diagnose(answers: Answers): DiagnosisResult {
   if (senzai.length === 0) senzai.push(...rank(family.extension, '潜在型', () => 0).slice(0, 1))
 
   // 「将来の独立に備えたい」人には、月額継続の仕事を1つ以上入れる（無ければ顕在型の2位と入れ替える）
-  if (goal === GOAL.independence && ![...kenzai, ...senzai].some(p => p.job.contract === '月額継続')) {
+  if (goals.has(GOAL.independence) && ![...kenzai, ...senzai].some(p => p.job.contract === '月額継続')) {
     const ongoing = kenzaiPool.slice(2).find(p => p.job.contract === '月額継続' && !(short && p.job.regular))
     if (ongoing) kenzai[1] = ongoing
   }
