@@ -145,6 +145,13 @@ export const RADAR_AXES: readonly Axis[] = [
 
 export type RadarScore = { id: RadarAxisId; label: string; value: number; ratio: number }
 
+/**
+ * 点の割合（点 ÷ 目安）を 1〜5 にするときの曲がり具合。1 なら割合どおり、大きいほど中くらいの力が低めに出て、強い力だけがとがる。
+ * 2026-11-10 の打ち合わせで「六角形をとがらせて強みをわかりやすく」となり、1 → 2 にした（割合 0.5 なら 3 → 2、0.75 なら 4 → 3）。
+ * 力ごとに別々に決まるので、途中経過で見せた形が結果で変わらない決まりはそのまま。いちばん高い力（strongestAxis）も変わらない
+ */
+const SHARPNESS = 2
+
 /** 6つの力の点（1〜5）。まだ答えていない設問の分は 0 点として数える（途中経過では、答え終えた力だけを見せる） */
 export function radarScores(answers: Answers): RadarScore[] {
   const deepQ = deepQuestion(answers)
@@ -156,7 +163,8 @@ export function radarScores(answers: Answers): RadarScore[] {
   }
   return RADAR_AXES.map(axis => {
     const ratio = Math.max(0, axis.points(c)) / axis.cap
-    return { id: axis.id, label: axis.label, value: Math.min(5, Math.max(1, 1 + Math.round(4 * ratio))), ratio }
+    const value = Math.min(5, Math.max(1, 1 + Math.round(4 * Math.min(1, ratio) ** SHARPNESS)))
+    return { id: axis.id, label: axis.label, value, ratio }
   })
 }
 

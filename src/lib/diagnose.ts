@@ -174,7 +174,8 @@ export function diagnose(answers: Answers): DiagnosisResult {
 
   /** 強み活用度の決め手（頼まれること・いちばんの自信が、この仕事の根拠に入っているか） */
   const strongMatch = (job: Job) => job.evidence.some(id => (questionOf(id) === 'q2' || questionOf(id) === 'q3') && picked.has(id))
-  const deepMatch = (job: Job) => deepNo !== null && !!job.deep?.includes(deepNo)
+  // 深掘りの番号は仕事の内容ごとに意味が違うので、その人の仕事の内容の部品のときだけ見る（下の「補う」仕事では見ない）
+  const deepMatch = (job: Job) => deepNo !== null && !!job.deep?.includes(deepNo) && detail.jobs.includes(job)
 
   function score(job: Job): number {
     let s = 0
@@ -199,8 +200,14 @@ export function diagnose(answers: Answers): DiagnosisResult {
       .map((job, order) => ({ job, layer, order, experience, score: score(job) + bonus(job) }))
       .sort((a, b) => tooBusy(a.job) - tooBusy(b.job) || b.score - a.score || a.order - b.order)
 
-  // 顕在型：仕事の内容ごとの5つから2つ。STEP5 の答えに合う仕事を強く上げる
-  const kenzaiPool = rank(detail.jobs, '顕在型', job => (deepMatch(job) ? 5 : 0))
+  // 顕在型：仕事の内容ごとの部品から2つ。STEP5 の答えに合う仕事を強く上げる。
+  // 2026-11-11 に案件の少ない仕事（△）を外したので、部品が2つに満たない仕事の内容がある。そのときは、同じタイプのほかの仕事の内容の部品から補う
+  const otherJobs = family.details.filter(d => d !== detail).flatMap(d => d.jobs)
+  // 時間が少ない人に、毎週の定例が要る仕事を出さないことは、補う仕事より優先する（並べ替えは安定なので、それ以外は自分の仕事の内容が先のまま）
+  const kenzaiPool = [
+    ...rank(detail.jobs, '顕在型', job => (deepMatch(job) ? 5 : 0)),
+    ...rank(otherJobs, '顕在型', () => 0),
+  ].sort((a, b) => tooBusy(a.job) - tooBusy(b.job))
   const kenzai = kenzaiPool.slice(0, 2)
 
   // 潜在型：仕事の外の経験ごとの部品から1つ（経験を2つ選んだ人は、それぞれのいちばん上を比べて点数の高いほう）。

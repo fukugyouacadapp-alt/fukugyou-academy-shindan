@@ -2,6 +2,7 @@
  * 強みの六角形（6つの力。1〜5）。結果画面と、診断の途中のチェックポイントで使う。
  * shown に入っていない力は「描きかけ」として、軸を点線に、名前を「?」にし、形は中心から伸ばさない（要件定義 R11）。
  * 並びは src/lib/radar.ts の RADAR_AXES（上から時計回り）。色は tokens.css の名前で引く。
+ * top（いちばん高い力）は、点を大きく・名前をオレンジにして目立たせる（2026-11-10 の打ち合わせ「強みをわかりやすく」）。
  */
 
 type Point = { id: string; label: string; value: number }
@@ -25,12 +26,26 @@ function labelProps(i: number): { x: number; y: number; textAnchor: 'start' | 'm
   return { x: x + (i < 3 ? 10 : -10), y: y + 5, textAnchor: i < 3 ? 'start' : 'end' }
 }
 
-export function RadarChart({ axes, shown, className = '' }: { axes: Point[]; shown?: string[]; className?: string }) {
+export function RadarChart({
+  axes,
+  shown,
+  top,
+  className = '',
+}: {
+  axes: Point[]
+  shown?: string[]
+  /** いちばん高い力の id（src/lib/radar.ts の strongestAxis）。見せている力のときだけ目立たせる */
+  top?: string
+  className?: string
+}) {
   const isShown = (p: Point) => !shown || shown.includes(p.id)
+  const isTop = (p: Point) => p.id === top && isShown(p)
   const visible = axes.filter(isShown)
   const hidden = axes.filter(p => !isShown(p))
+  const topPoint = axes.find(isTop)
   const description = [
     `強みの六角形。${visible.map(p => `${p.label}は5段階の${p.value}`).join('、')}`,
+    topPoint ? `いちばん高いのは${topPoint.label}` : '',
     hidden.length > 0 ? `まだわからない力：${hidden.map(p => p.label).join('、')}` : '',
   ]
     .filter(Boolean)
@@ -73,16 +88,20 @@ export function RadarChart({ axes, shown, className = '' }: { axes: Point[]; sho
       {axes.map((p, i) => {
         if (!isShown(p)) return null
         const [x, y] = at(i, (R * p.value) / 5)
-        return <circle key={p.id} cx={x} cy={y} r={3.5} fill="var(--color-accent-fill)" />
+        return isTop(p) ? (
+          <circle key={p.id} cx={x} cy={y} r={6} fill="var(--color-accent-fill)" stroke="var(--color-surface)" strokeWidth={2} />
+        ) : (
+          <circle key={p.id} cx={x} cy={y} r={3.5} fill="var(--color-accent-fill)" />
+        )
       })}
       {axes.map((p, i) => (
         <text
           key={p.id}
           {...labelProps(i)}
           fontFamily="inherit"
-          fontSize={isShown(p) ? 13 : 15}
+          fontSize={isShown(p) ? (isTop(p) ? 15 : 13) : 15}
           fontWeight={700}
-          fill={isShown(p) ? 'var(--color-ink)' : 'var(--color-muted)'}
+          fill={isTop(p) ? 'var(--color-accent-ink)' : isShown(p) ? 'var(--color-ink)' : 'var(--color-muted)'}
         >
           {isShown(p) ? p.label : '?'}
         </text>

@@ -393,7 +393,7 @@ function Checkpoint({
         <h2 ref={headingRef} tabIndex={-1} className="mt-3 text-xl">
           診断はまだ続きます。あと{questionsLeft}問
         </h2>
-        <RadarChart axes={scores} shown={shown} className="mt-4 w-full max-w-[300px]" />
+        <RadarChart axes={scores} shown={shown} top={top.id} className="mt-4 w-full max-w-[300px]" />
         <p className="mt-1 text-sm font-bold tabular-nums">完成度 {shown.length}/6</p>
         <div aria-hidden className="mt-2 h-1.5 w-full max-w-[240px] overflow-hidden rounded-full bg-well">
           <div className="h-full rounded-full bg-brand" style={{ width: `${(shown.length / 6) * 100}%` }} />

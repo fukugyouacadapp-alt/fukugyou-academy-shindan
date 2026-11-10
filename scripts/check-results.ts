@@ -170,13 +170,15 @@ function checkFamily(family: Family, index: number) {
       checkTag(`${where} deep[${k}].tag`, x.tag)
       checkText(`${where} deep[${k}].know`, x.know, 20)
     })
-    if (d.jobs.length !== 5) errors.push(`${where}: 顕在型（jobs）が${d.jobs.length}つ（5つのはず）`)
+    // 2026-11-11 に案件の少ない仕事（△）を外したので、数はそろっていない。2つに満たないときは、同じタイプのほかの仕事の内容から補う（diagnose.ts）
+    if (d.jobs.length < 1) errors.push(`${where}: 顕在型（jobs）が0つ（1つ以上いる）`)
+    else if (d.jobs.length < 2) warnings.push(`${where}: 顕在型（jobs）が${d.jobs.length}つ（足りない分は、同じタイプのほかの仕事の内容から補う）`)
     if (d.jobs.filter(job => job.regular).length > 2) errors.push(`${where}: regular（毎週の定例が要る仕事）が3つ以上あります（2つまで）`)
     if (!d.jobs.some(job => job.contract === '月額継続' && !job.regular)) {
       warnings.push(`${where}: 毎週の定例が要らない月額継続の仕事がありません（週3時間未満で「将来の独立に備えたい」人に、月額継続を出せないことがあります）`)
     }
     for (let k = 1; k <= 4; k++) {
-      if (!d.jobs.some(job => job.deep?.includes(k))) errors.push(`${where}: STEP5 の答え${k}「${spec.details[j]?.deep.options[k - 1]}」に合う仕事（deep に ${k}）がありません`)
+      if (!d.jobs.some(job => job.deep?.includes(k))) warnings.push(`${where}: STEP5 の答え${k}「${spec.details[j]?.deep.options[k - 1]}」に合う仕事（deep に ${k}）がありません`)
       else if (!d.jobs.some(job => job.deep?.includes(k) && !job.regular)) {
         warnings.push(`${where}: STEP5 の答え${k}「${spec.details[j]?.deep.options[k - 1]}」に合う仕事が、毎週の定例が要る仕事だけです（週3時間未満の人には上位に出せません）`)
       }
@@ -191,7 +193,8 @@ function checkFamily(family: Family, index: number) {
   for (const key of HIDDEN_KEYS) {
     const jobs = family.hidden[key] ?? []
     const where = `${name} hidden['${key}']（${optionLabel(key)}）`
-    if (jobs.length !== 3) errors.push(`${where}: ${jobs.length}つ（3つのはず）`)
+    if (jobs.length > 3) errors.push(`${where}: ${jobs.length}つ（3つまで）`)
+    if (jobs.length === 0) warnings.push(`${where}: 0つ（この経験を選んだ人には、本業の延長（extension）から出す）`)
     if (jobs.filter(job => !job.details).length < 1 && jobs.length > 0) {
       warnings.push(`${where}: 3つとも details 付き（どの仕事の内容の人にも合うものを1つ以上入れると安心）`)
     }
@@ -202,7 +205,7 @@ function checkFamily(family: Family, index: number) {
       if (detailTags.has(job.tags[0])) errors.push(`${w}: 1つ目のタグ「${job.tags[0]}」が本業のタグと同じ（潜在型の1つ目は「仕事の外の経験」側のタグ）`)
     })
   }
-  if (family.extension.length !== 3) errors.push(`${name} extension: ${family.extension.length}つ（3つのはず）`)
+  if (family.extension.length < 1) errors.push(`${name} extension: 0つ（1つ以上いる）`)
   family.extension.forEach((job, k) => {
     const w = `${name} extension[${k}](${job.id})`
     seen(w, job)
@@ -215,7 +218,7 @@ if (FAMILIES.length !== JOB_FAMILIES.length) errors.push(`catalog/index.ts: 仕�
 const targets = FAMILIES.map((f, i) => ({ f, i })).filter(({ i }) => !ONLY || FILES[i] === ONLY)
 for (const { f, i } of targets) checkFamily(f, i)
 
-const ready = targets.filter(({ f }) => f.details.length === 4 && f.details.every(d => d.jobs.length >= 3) && f.extension.length >= 2)
+const ready = targets.filter(({ f }) => f.details.length === 4 && f.details.every(d => d.jobs.length >= 1) && f.extension.length >= 1)
 
 // ── 2. 組み立てた結果の点検 ──
 

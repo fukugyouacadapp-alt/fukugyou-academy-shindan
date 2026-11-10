@@ -62,6 +62,8 @@ export function ResultView({
   const openJobs = result.recommendations.slice(0, open)
   const lockedJobs = result.recommendations.slice(open)
   const caseStudy = caseStudyFor(result.direction.name)
+  // いちばん高い力。合う複業の方向は、いちばん高い力で決まる（src/lib/radar.ts の directionOf）ので、方向の名前から引く
+  const topAxis = RADAR_AXES.find(a => a.direction.name === result.direction.name)?.id
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pb-20">
       {banner && <div className="mt-6">{banner}</div>}
@@ -109,12 +111,16 @@ export function ResultView({
       {/* 2. 6つの力（六角形）と 3. 合う複業の方向。伏せずに見せる（要件定義 R13） */}
       <BubbleCard label="あなたの6つの力">
         <div className="grid items-center gap-6 sm:grid-cols-[minmax(0,300px)_1fr]">
-          <RadarChart axes={result.radar} className="mx-auto w-full max-w-[300px]" />
+          <RadarChart axes={result.radar} top={topAxis} className="mx-auto w-full max-w-[300px]" />
           <ul className="grid grid-cols-2 gap-2">
             {result.radar.map(p => (
-              <li key={p.id} className="rounded-[var(--radius-sm)] bg-well px-3 py-2">
+              <li
+                key={p.id}
+                className={`rounded-[var(--radius-sm)] px-3 py-2 ${p.id === topAxis ? 'border border-brand-rule bg-brand-paper' : 'bg-well'}`}
+              >
+                {p.id === topAxis && <p className="text-[0.7rem] font-bold text-brand-ink">いちばんの強み</p>}
                 <p className="flex items-baseline justify-between gap-2">
-                  <span className="text-sm font-bold">{p.label}</span>
+                  <span className={`text-sm font-bold ${p.id === topAxis ? 'text-brand-ink' : ''}`}>{p.label}</span>
                   <span className="text-xs font-bold tabular-nums text-brand-ink">{p.value}/5</span>
                 </p>
                 <p className="text-xs text-sub">{RADAR_AXES.find(a => a.id === p.id)?.hint}</p>
