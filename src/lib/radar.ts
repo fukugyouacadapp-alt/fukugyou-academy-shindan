@@ -3,9 +3,9 @@ import { byLabel, deepQuestion, DETAIL_BY_FAMILY, Q, type Answers, type StepNo }
 /**
  * 強みの六角形（6つの力）。要件定義（複業アカデミー様・2026-10-29 版）の R13・R11。
  * 回答から点数で出す（AIは使わない。同じ回答なら同じ形）。
- * 診断の途中（STEP2・3・4 の後）に「描きかけ」で見せるので、それぞれの力は、見せる時点までに答えた設問だけで決める
+ * 診断の途中（STEP3 の後。2026-11-10 までは STEP2・3・4 の後の3回）に「描きかけ」で見せるので、それぞれの力は、見せる時点までに答えた設問だけで決める
  * （あとの答えで、一度見せた形が変わらないように。npm run check:results が確かめる）。
- * STEP2 の後に2つ、STEP3 の後に4つ、STEP4 の後に5つ、結果画面で6つそろう。決まりは docs/02-result-rules.md の7章。
+ * 各力の step は「点数に使う設問の範囲」。途中経過では step が 3 以下の4つ（対人力・仕組み化・企画力・発信力）を見せ、結果画面で6つそろう。決まりは docs/02-result-rules.md の7章。
  */
 
 export type RadarAxisId = 'people' | 'plan' | 'voice' | 'system' | 'expert' | 'keep'
@@ -99,7 +99,7 @@ const EXPERT = merge(
 
 /**
  * 六角形の並び（上から時計回り）。名前と説明は要件定義の4章「方向性のポイント」の案のまま。
- * 並びは、途中経過で見せる順（STEP2 の後に対人力・仕組み化 → STEP3 の後に企画力・発信力 → STEP4 の後に継続力 → 結果で専門性）にして、
+ * 並びは、点数が決まる順（STEP2 で対人力・仕組み化 → STEP3 で企画力・発信力 → STEP4 で継続力 → STEP5 で専門性）にして、
  * 描きかけの形が隣どうしで広がっていくようにした（要件定義の図の並びは「例」なので変えてよい）
  */
 export const RADAR_AXES: readonly Axis[] = [

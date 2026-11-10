@@ -17,8 +17,9 @@ import { SliderScale } from './SliderScale'
 /**
  * 診断の画面（STEP1〜5。9画面）。1画面に1〜3問。
  * 回答は変えるたびに sessionStorage へ保存するので、閉じても続きから再開できる。
- * STEP2・3・4 を答え終えたら、途中経過（描きかけの六角形と「まだ続きます。あと◯問」）を1画面はさむ
+ * STEP3 を答え終えたら（真ん中あたり）、途中経過（描きかけの六角形と「まだ続きます。あと◯問」）を1画面はさむ
  * （要件定義 R11。途中で終わったと思わせず、続きを見たい気持ちで最後まで答えてもらうため。2026-10-31）。
+ * はじめは STEP2・3・4 の後の3回だったが、2026-11-10 の打ち合わせで「途中経過は1回まで」となり、STEP3 の後だけにした。
  */
 
 type Screen = { step: StepNo; questions: (a: Answers) => Question[] }
@@ -39,7 +40,7 @@ export const SCREENS: Screen[] = [
 ]
 
 /** 答え終えたあとに途中経過をはさむ STEP */
-const CHECKPOINT_STEPS: StepNo[] = [2, 3, 4]
+const CHECKPOINT_STEPS: StepNo[] = [3]
 
 /** 結果画面の「強みの質問に戻って選び直す」で使う */
 export const STRENGTH_SCREEN = SCREENS.findIndex(s => s.step === 2)
