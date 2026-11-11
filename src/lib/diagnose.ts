@@ -113,12 +113,6 @@ const AXIS_COMMENT: Record<string, Record<'left' | 'mid' | 'right', string>> = {
 
 const SHORT_TIME_CAUTION = '使える時間が少ないうちは、1回で終わる仕事を1件だけ受けて、続けられそうか確かめてから広げましょう。'
 
-/**
- * 講師用の「結果の部品の一覧」（/staff/parts）で見せるための出口。キーは選択肢ID（AXIS_COMMENT だけ働き方の好みの設問ID）。
- * まとめの文章などの「型」そのものは下の diagnose() の中に書いてあるので、型を変えたら src/components/staff/ResultParts.tsx の説明も直す
- */
-export const RESULT_PARTS = { CITE, CITE_Q6, EXPERIENCE_VALUE, NICK_Q3, NICK_Q2, PERSON_Q4, TAG_Q3, TAG_Q2, AXIS_COMMENT, SHORT_TIME_CAUTION }
-
 // ── 組み立て ──
 
 const fill = (template: string, x: string) => template.replace('{x}', x)
