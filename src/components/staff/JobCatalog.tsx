@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { FAMILIES } from '@/data/catalog'
 import type { Job } from '@/data/catalog/types'
 import { JOB_FAMILIES, Q } from '@/data/questions'
-import { StaffNav } from './StaffNav'
 
 /**
  * 講師用の「おすすめに出る仕事の一覧」（/staff/jobs。2026-11-11）。
@@ -87,13 +86,11 @@ export function JobCatalog() {
   const families = JOB_FAMILIES.map((f, i) => ({ index: i, label: shortLabel(f.label) })).filter(f => family === null || f.index === family)
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-10">
-      <p className="eyebrow">講師用</p>
-      <h1 className="section-title mt-2">おすすめに出る仕事の一覧</h1>
-      <p className="mt-2 text-sm leading-relaxed text-sub">
+    <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-8">
+      <h1 className="section-title">おすすめに出る仕事の一覧</h1>
+      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-sub">
         診断の結果に出る可能性のある仕事を、すべて並べています（全{entries.length}件）。仕事のタイプごとに、どんな回答の人に出るかで分けています。
       </p>
-      <StaffNav current="/staff/jobs" />
 
       <div className="mt-6 flex flex-wrap gap-2" role="group" aria-label="仕事のタイプで切り替える">
         <FilterButton pressed={family === null} onClick={() => setFamily(null)}>すべて</FilterButton>
@@ -111,7 +108,7 @@ export function JobCatalog() {
         onChange={e => setQuery(e.target.value)}
         placeholder="例：採用　SNS　月額継続"
         autoComplete="off"
-        className="mt-1 min-h-12 w-full rounded-[var(--radius-sm)] border border-line-strong bg-[var(--color-surface)] px-4"
+        className="mt-1 min-h-12 w-full max-w-2xl rounded-[var(--radius-sm)] border border-line-strong bg-[var(--color-surface)] px-4"
       />
       <p className="mt-3 text-sm text-sub" aria-live="polite">
         {visible.length}件を表示しています（全{entries.length}件）
@@ -136,7 +133,7 @@ export function JobCatalog() {
                     <span className="ml-2 text-sm font-normal text-sub">{list.length}件</span>
                   </h3>
                   <p className="mt-1 text-xs text-sub">{layer.note}</p>
-                  <ul className="mt-3 flex flex-col gap-3">
+                  <ul className="mt-3 grid items-start gap-3 lg:grid-cols-2">
                     {list.map(e => (
                       <li key={e.job.id}>
                         <JobCard entry={e} />

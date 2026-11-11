@@ -1,26 +1,32 @@
 import Link from 'next/link'
+import { SiteFooter, SiteHeader } from '@/components/SiteChrome'
 
-/** 講師用のページどうしを行き来するリンク（/staff・/staff/jobs・/staff/parts） */
+/**
+ * 講師用のページ（/staff・/staff/jobs・/staff/parts）の枠（2026-11-11）。
+ * 上の帯に「講師用」の札、その下に3ページを行き来するタブを置く。タブは画面の上に貼り付け、下まで読んでも切り替えられるようにする。
+ * 中身は PC では横幅を広げ（max-w-5xl）、一度に多く見えるようにする
+ */
 const PAGES = [
-  { href: '/staff', label: '診断番号から結果を見る' },
-  { href: '/staff/jobs', label: 'おすすめに出る仕事の一覧' },
-  { href: '/staff/parts', label: '結果の部品の一覧' },
+  { href: '/staff', label: '結果を見る' },
+  { href: '/staff/jobs', label: '仕事の一覧' },
+  { href: '/staff/parts', label: '結果の部品' },
 ] as const
 
-export function StaffNav({ current }: { current: (typeof PAGES)[number]['href'] }) {
+export function StaffShell({ current, children }: { current: (typeof PAGES)[number]['href']; children: React.ReactNode }) {
   return (
-    <nav aria-label="講師用のページ" className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-      {PAGES.map(p =>
-        p.href === current ? (
-          <span key={p.href} aria-current="page" className="font-bold">
-            {p.label}
-          </span>
-        ) : (
-          <Link key={p.href} href={p.href} className="btn-text">
-            {p.label}
-          </Link>
-        ),
-      )}
-    </nav>
+    <>
+      <SiteHeader right={<span className="staff-label">講師用</span>} />
+      <nav aria-label="講師用のページ" className="staff-tabs">
+        <div className="mx-auto flex max-w-5xl overflow-x-auto px-4">
+          {PAGES.map(p => (
+            <Link key={p.href} href={p.href} aria-current={p.href === current ? 'page' : undefined} className="staff-tab">
+              {p.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
+      <main className="flex flex-1 flex-col">{children}</main>
+      <SiteFooter />
+    </>
   )
 }

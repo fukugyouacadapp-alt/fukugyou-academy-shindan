@@ -2,7 +2,6 @@ import { FAMILIES } from '@/data/catalog'
 import { JOB_FAMILIES, optionLabel, SLIDERS } from '@/data/questions'
 import { RESULT_PARTS } from '@/lib/diagnose'
 import { RADAR_AXES } from '@/lib/radar'
-import { StaffNav } from './StaffNav'
 
 /**
  * 講師用の「結果の部品の一覧」（/staff/parts。2026-11-11）。
@@ -32,15 +31,13 @@ const SECTIONS = [
 
 export function ResultParts() {
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-10">
-      <p className="eyebrow">講師用</p>
-      <h1 className="section-title mt-2">結果の部品の一覧</h1>
-      <p className="mt-2 text-sm leading-relaxed text-sub">
+    <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-8">
+      <h1 className="section-title">結果の部品の一覧</h1>
+      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-sub">
         結果画面のうち、おすすめの仕事以外の部品を並べています。結果は AI で作らず、ここにある言葉を回答に合わせて選び、つないで作ります。
       </p>
-      <StaffNav current="/staff/parts" />
 
-      <nav aria-label="このページの目次" className="card mt-6 px-5 py-4 text-sm">
+      <nav aria-label="このページの目次" className="card mt-6 max-w-3xl px-5 py-4 text-sm">
         <p className="font-bold">目次</p>
         <ol className="mt-2 flex list-decimal flex-col gap-1 pl-5">
           {SECTIONS.map(s => (
@@ -87,7 +84,7 @@ export function ResultParts() {
         <How>
           6つの力を、回答から点数で 1〜5 にします。いちばん高い力で「合う複業の方向」（6通り）が決まります。途中経過（STEP3 の後）では、上の4つまでを見せ、「いちばん高い力の一言」を出します。
         </How>
-        <ul className="mt-4 flex flex-col gap-3">
+        <ul className="mt-4 grid items-start gap-3 lg:grid-cols-2">
           {RADAR_AXES.map(a => (
             <li key={a.id} className="card px-5 py-4 text-sm">
               <p className="font-bold">
@@ -177,7 +174,7 @@ export function ResultParts() {
         {FAMILIES.map((family, fi) => (
           <div key={family.label} className="mt-6">
             <h3 className="font-bold">{shortLabel(family.label)}</h3>
-            <ul className="mt-3 flex flex-col gap-3">
+            <ul className="mt-3 grid items-start gap-3 lg:grid-cols-2">
               {family.details.map((detail, di) => {
                 const deep = JOB_FAMILIES[fi].details[di]?.deep
                 return (
@@ -219,7 +216,7 @@ export function ResultParts() {
 function Section({ id, children }: { id: (typeof SECTIONS)[number]['id']; children: React.ReactNode }) {
   const n = SECTIONS.findIndex(s => s.id === id) + 1
   return (
-    <section id={id} className="mt-12 scroll-mt-6">
+    <section id={id} className="mt-12 scroll-mt-20">
       <h2 className="text-xl font-bold">
         {n}. {SECTIONS[n - 1].title}
       </h2>
@@ -229,7 +226,7 @@ function Section({ id, children }: { id: (typeof SECTIONS)[number]['id']; childr
 }
 
 function How({ children }: { children: React.ReactNode }) {
-  return <p className="mt-2 text-sm leading-relaxed">{children}</p>
+  return <p className="mt-2 max-w-3xl text-sm leading-relaxed">{children}</p>
 }
 
 function Example({ children }: { children: React.ReactNode }) {

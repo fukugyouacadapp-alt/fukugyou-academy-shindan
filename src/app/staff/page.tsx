@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { SiteFooter, SiteHeader } from '@/components/SiteChrome'
+import { StaffShell } from '@/components/staff/StaffNav'
 import { StaffView } from '@/components/staff/StaffView'
 
 /** 講師用のページ。パスワードは src/proxy.ts でかける。どのページからもリンクしない */
@@ -10,12 +10,8 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <>
-      <SiteHeader />
-      <main className="flex flex-1 flex-col">
-        <StaffView />
-      </main>
-      <SiteFooter />
-    </>
+    <StaffShell current="/staff">
+      <StaffView />
+    </StaffShell>
   )
 }

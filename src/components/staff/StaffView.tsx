@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { StaffNav } from '@/components/staff/StaffNav'
 import { ResultView } from '@/components/result/ResultView'
 import { activeQuestions, optionLabel, sliderLabel, type Answers } from '@/data/questions'
 import { highlightLabels, jobFamilyIndex, validateAnswers } from '@/lib/answers'
@@ -38,14 +37,12 @@ export function StaffView() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-3xl px-4 pt-10">
-        <p className="eyebrow">講師用</p>
-        <h1 className="section-title mt-2">診断番号から結果を見る</h1>
-        <p className="mt-2 text-sm leading-relaxed text-sub">
+      <div className="mx-auto w-full max-w-5xl px-4 pt-8">
+        <h1 className="section-title">診断番号から結果を見る</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-sub">
           面談を予約した方から受け取った診断番号を入れると、その方の回答と、伏せた仕事も含めた結果をすべて表示します。番号も結果も、どこにも保存しません。
         </p>
-        <StaffNav current="/staff" />
-        <form onSubmit={look} className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <form onSubmit={look} className="mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row">
           <label htmlFor="staff-code" className="sr-only">診断番号</label>
           <input
             id="staff-code"
@@ -93,7 +90,7 @@ function AnswerList({ answers }: { answers: Answers }) {
   return (
     <details className="card mt-6 px-5 py-4" open>
       <summary className="cursor-pointer font-bold">この方の回答（{rows.length}問）</summary>
-      <dl className="mt-3 flex flex-col gap-2.5 text-sm">
+      <dl className="mt-3 grid gap-x-8 gap-y-2.5 text-sm sm:grid-cols-2 lg:grid-cols-3">
         {rows.map(r => (
           <div key={r.key}>
             <dt className="text-xs text-sub">{r.title}</dt>

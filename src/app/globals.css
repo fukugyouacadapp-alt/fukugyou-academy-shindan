@@ -387,6 +387,45 @@ button {
     font-weight: 700;
   }
 
+  /* ── 講師用の画面の枠（2026-11-11）。上の帯の右に「講師用」の札、その下に3ページを切り替えるタブ。
+   *    タブは画面の上に貼り付け、下まで読んでも切り替えられるようにする。今いるページは下線をオレンジにする ── */
+  .staff-label {
+    padding: 2px 12px;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius-pill);
+    color: var(--color-muted);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  .staff-tabs {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    border-bottom: 1px solid var(--color-rule);
+    background: var(--color-surface);
+  }
+  .staff-tab {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    min-height: 48px;
+    margin-bottom: -1px;
+    padding: 0 16px;
+    border-bottom: 3px solid transparent;
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .staff-tab:hover {
+    color: var(--color-ink);
+  }
+  .staff-tab[aria-current="page"] {
+    border-bottom-color: var(--color-accent);
+    color: var(--color-ink);
+  }
+
   /* ページ上端の細い帯（スライド下端の帯の色） */
   .top-band {
     height: 4px;

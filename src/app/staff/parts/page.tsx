@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import { SiteFooter, SiteHeader } from '@/components/SiteChrome'
 import { ResultParts } from '@/components/staff/ResultParts'
+import { StaffShell } from '@/components/staff/StaffNav'
 
 /** 講師用の「結果の部品の一覧」。パスワードは /staff と同じ（src/proxy.ts）。講師用のページからだけリンクする */
 export const metadata: Metadata = {
@@ -10,12 +10,8 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <>
-      <SiteHeader />
-      <main className="flex flex-1 flex-col">
-        <ResultParts />
-      </main>
-      <SiteFooter />
-    </>
+    <StaffShell current="/staff/parts">
+      <ResultParts />
+    </StaffShell>
   )
 }
