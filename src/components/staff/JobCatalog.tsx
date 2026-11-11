@@ -1,10 +1,10 @@
 'use client'
 
-import Link from 'next/link'
 import { useState } from 'react'
 import { FAMILIES } from '@/data/catalog'
 import type { Job } from '@/data/catalog/types'
 import { JOB_FAMILIES, Q } from '@/data/questions'
+import { StaffNav } from './StaffNav'
 
 /**
  * 講師用の「おすすめに出る仕事の一覧」（/staff/jobs。2026-11-11）。
@@ -93,9 +93,7 @@ export function JobCatalog() {
       <p className="mt-2 text-sm leading-relaxed text-sub">
         診断の結果に出る可能性のある仕事を、すべて並べています（全{entries.length}件）。仕事のタイプごとに、どんな回答の人に出るかで分けています。
       </p>
-      <p className="mt-2">
-        <Link href="/staff" className="btn-text">← 診断番号から結果を見る</Link>
-      </p>
+      <StaffNav current="/staff/jobs" />
 
       <div className="mt-6 flex flex-wrap gap-2" role="group" aria-label="仕事のタイプで切り替える">
         <FilterButton pressed={family === null} onClick={() => setFamily(null)}>すべて</FilterButton>

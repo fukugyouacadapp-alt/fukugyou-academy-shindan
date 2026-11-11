@@ -1,7 +1,7 @@
 'use client'
 
-import Link from 'next/link'
 import { useState } from 'react'
+import { StaffNav } from '@/components/staff/StaffNav'
 import { ResultView } from '@/components/result/ResultView'
 import { activeQuestions, optionLabel, sliderLabel, type Answers } from '@/data/questions'
 import { highlightLabels, jobFamilyIndex, validateAnswers } from '@/lib/answers'
@@ -44,9 +44,7 @@ export function StaffView() {
         <p className="mt-2 text-sm leading-relaxed text-sub">
           面談を予約した方から受け取った診断番号を入れると、その方の回答と、伏せた仕事も含めた結果をすべて表示します。番号も結果も、どこにも保存しません。
         </p>
-        <p className="mt-2">
-          <Link href="/staff/jobs" className="btn-text">おすすめに出る仕事の一覧を見る →</Link>
-        </p>
+        <StaffNav current="/staff" />
         <form onSubmit={look} className="mt-6 flex flex-col gap-3 sm:flex-row">
           <label htmlFor="staff-code" className="sr-only">診断番号</label>
           <input
