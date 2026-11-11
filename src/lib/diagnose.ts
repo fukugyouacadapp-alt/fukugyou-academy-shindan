@@ -207,7 +207,7 @@ export function diagnose(answers: Answers): DiagnosisResult {
       .sort((a, b) => tooBusy(a.job) - tooBusy(b.job) || b.score - a.score || a.order - b.order)
 
   // 顕在型：仕事の内容ごとの部品から2つ。STEP5 の答えに合う仕事を強く上げる。
-  // 2026-11-11 に案件の少ない仕事（△）を外したので、部品が2つに満たない仕事の内容がある。そのときは、同じタイプのほかの仕事の内容の部品から補う
+  // 2026-11-11 に案件の少ない仕事（△）を外したので、仕事の内容ごとの部品の数がそろっていない。2つに満たないときは、同じタイプのほかの仕事の内容の部品から補う
   const otherJobs = family.details.filter(d => d !== detail).flatMap(d => d.jobs)
   // 時間が少ない人に、毎週の定例が要る仕事を出さないことは、補う仕事より優先する（並べ替えは安定なので、それ以外は自分の仕事の内容が先のまま）
   const kenzaiPool = [
