@@ -47,7 +47,10 @@ export function safeNext(value: unknown): string {
 /** 送り元がこのサイトか（よそのページから勝手にログイン・ログアウトさせないように） */
 export function sameOrigin(request: { headers: Headers; nextUrl: { origin: string } }): boolean {
   const origin = request.headers.get('origin')
-  return !origin || origin === request.nextUrl.origin
+  if (origin) return origin === request.nextUrl.origin
+  // Origin が付いていないときは、ブラウザが付ける Sec-Fetch-Site でよそからの送信を見分ける
+  const site = request.headers.get('sec-fetch-site')
+  return !site || site === 'same-origin' || site === 'none'
 }
 
 /** 文字列が同じか。かかる時間から一致の具合を探られないよう、ハッシュにしてから同じ長さで比べる */

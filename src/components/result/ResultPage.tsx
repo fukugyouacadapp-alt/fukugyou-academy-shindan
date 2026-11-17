@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { firstUnansweredScreen, STRENGTH_SCREEN } from '@/components/quiz/Quiz'
+import { firstUnansweredScreen, prune, STRENGTH_SCREEN } from '@/components/quiz/Quiz'
 import { READING_LOGO } from '@/components/readingLogo'
 import type { Answers } from '@/data/questions'
 import { buildSample } from '@/data/sample-result'
@@ -68,10 +68,12 @@ function ResultInner() {
       }
     }
     if (!answers || Object.keys(answers).length === 0) return { kind: 'empty' }
+    // 問い方を切り替える前の答え（いまの形で聞かない設問）は、診断の画面と同じく除いてから見る
+    const current = prune(answers)
     // 途中までしか答えていない（結果のURLを直接開いた など）ときは、続きへ案内する
-    const unanswered = firstUnansweredScreen(answers)
+    const unanswered = firstUnansweredScreen(current)
     if (unanswered !== null) return { kind: 'incomplete', screen: unanswered }
-    const checked = validateAnswers(answers)
+    const checked = validateAnswers(current)
     if (!checked.ok) return { kind: 'incomplete', screen: 0 }
     try {
       return {

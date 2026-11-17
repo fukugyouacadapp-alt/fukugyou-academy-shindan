@@ -68,7 +68,7 @@ function isAnswered(q: Question, a: Answers): boolean {
  * 前の答えを変えて聞かなくなった設問・選べなくなった選択肢の答えを消す（1 を変えたときの 1-2、1-2 を変えたときの STEP5）。
  * 問い方を切り替えた（src/data/question-set.ts）ときに、いまの形で聞かない設問の答えも消す
  */
-function prune(a: Answers): Answers {
+export function prune(a: Answers): Answers {
   const out: Answers = {}
   for (const q of activeQuestions(a, QUESTION_SET)) {
     const v = a[q.id]
