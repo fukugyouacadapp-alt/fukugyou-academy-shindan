@@ -13,8 +13,9 @@ export async function POST(request: NextRequest) {
   const next = safeNext(form?.get('next'))
   const input = form?.get('password')
   const password = staffPassword()
+  if (!password) return new NextResponse('講師用のページは、まだパスワードが設定されていません。', { status: 503 })
 
-  if (!password || typeof input !== 'string' || !sameText(input, password)) {
+  if (typeof input !== 'string' || !sameText(input, password)) {
     await new Promise(r => setTimeout(r, 800))
     const back = new URL('/staff/login', request.url)
     back.searchParams.set('error', '1')

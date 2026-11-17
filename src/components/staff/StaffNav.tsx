@@ -1,5 +1,11 @@
 import Link from 'next/link'
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome'
+import { ReloadOnRestore } from '@/components/staff/ReloadOnRestore'
+
+const PAGES = [
+  { href: '/staff', label: '結果を見る' },
+  { href: '/staff/jobs', label: '仕事の一覧' },
+] as const
 
 /**
  * 講師用のページ（/staff・/staff/jobs）の枠（2026-11-11）。
@@ -7,13 +13,10 @@ import { SiteFooter, SiteHeader } from '@/components/SiteChrome'
  * 中身は PC では横幅を広げ（max-w-5xl）、一度に多く見えるようにする。
  * 上の帯の右にはログアウトのボタンも置く（ログインの仕組みは src/lib/staff-auth.ts）
  */
-const PAGES = [
-  { href: '/staff', label: '結果を見る' },
-  { href: '/staff/jobs', label: '仕事の一覧' },] as const
-
 export function StaffShell({ current, children }: { current: (typeof PAGES)[number]['href']; children: React.ReactNode }) {
   return (
     <>
+      <ReloadOnRestore />
       <SiteHeader
         right={
           <div className="flex items-center gap-3 print:hidden">
