@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ResultView } from '@/components/result/ResultView'
-import { activeQuestions, optionLabel, sliderLabel, type Answers } from '@/data/questions'
+import { activeQuestions, optionLabel, questionNo, questionSetOf, sliderLabel, type Answers } from '@/data/questions'
 import { highlightLabels, jobFamilyIndex, validateAnswers } from '@/lib/answers'
 import { diagnose } from '@/lib/diagnose'
 import { decodeResultCode, encodeResultCode } from '@/lib/result-code'
@@ -153,11 +153,12 @@ function summaryText(code: string, r: DiagnosisResult): string {
   return lines.join('\n')
 }
 
-/** その人の回答（設問の順に、選んだ言葉を並べる） */
+/** その人の回答（設問の順に、選んだ言葉を並べる）。番号は、その人が答えた形（6問・9問）での番号 */
 function AnswerList({ answers }: { answers: Answers }) {
-  const rows = activeQuestions(answers).map(q => ({
+  const set = questionSetOf(answers)
+  const rows = activeQuestions(answers, set).map(q => ({
     key: q.id,
-    title: q.kind === 'choice' ? `${q.no}　${q.title}` : `${q.no}　働き方の好み`,
+    title: `${questionNo(q, set)}　${q.kind === 'choice' ? q.title : '働き方の好み'}`,
     value:
       q.kind === 'choice'
         ? (answers[q.id] as string[]).map(id => optionLabel(id) ?? id).join('、')
@@ -165,7 +166,7 @@ function AnswerList({ answers }: { answers: Answers }) {
   }))
   return (
     <details className="card mt-6 px-5 py-4" open>
-      <summary className="cursor-pointer font-bold">この方の回答（{rows.length}問）</summary>
+      <summary className="cursor-pointer font-bold">この方の回答（{set === 'short' ? '6問' : '9問'}の形で答えています）</summary>
       <dl className="mt-3 grid gap-x-8 gap-y-2.5 text-sm sm:grid-cols-2 lg:grid-cols-3">
         {rows.map(r => (
           <div key={r.key}>

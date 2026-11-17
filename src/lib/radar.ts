@@ -1,4 +1,4 @@
-import { byLabel, deepQuestion, DETAIL_BY_FAMILY, Q, type Answers, type StepNo } from '@/data/questions'
+import { byLabel, deepQuestion, DETAIL_BY_FAMILY, Q, questionSetOf, type Answers, type StepNo } from '@/data/questions'
 
 /**
  * 強みの六角形（6つの力）。要件定義（複業アカデミー様・2026-10-29 版）の R13・R11。
@@ -26,6 +26,12 @@ type Axis = {
   direction: { name: string; text: string }
   /** これだけ点があれば 5（いちばん外側） */
   cap: number
+  /**
+   * 6問の形（4・5を聞かない。src/data/question-set.ts）での cap。4・5の点が入らない分を小さくして、形の出方を9問の形にそろえる。
+   * 2026-11-18 に、でたらめに作った2万通りの回答で「4・5を抜いたときの平均の点 ÷ 抜く前の平均の点」を cap に掛けて決めた
+   * （それぞれの力の平均の高さと、合う複業の方向の散らばりが、9問の形とほぼ同じになる）
+   */
+  shortCap: number
   points: (c: Ctx) => number
 }
 
@@ -104,38 +110,38 @@ const EXPERT = merge(
  */
 export const RADAR_AXES: readonly Axis[] = [
   {
-    id: 'people', label: '対人力', hint: '人と話す・頼られる', step: 2, cap: 7,
+    id: 'people', label: '対人力', hint: '人と話す・頼られる', step: 2, cap: 7, shortCap: 6,
     line: '人から頼られ、話を聞く力が光っています。',
     direction: { name: '人と組む伴走型', text: '相手の話を聞き、隣で支えながら一緒に進める複業が合っています。' },
     points: c => sumOf(c, PEOPLE),
   },
   {
-    id: 'system', label: '仕組み化', hint: '整える・回す', step: 2, cap: 7,
+    id: 'system', label: '仕組み化', hint: '整える・回す', step: 2, cap: 7, shortCap: 5.5,
     line: '段取りや仕組みを整える力が光っています。',
     direction: { name: '仕組みで支える裏方型', text: '段取りや仕組みを整えて、相手の仕事を楽にする複業が合っています。' },
     points: c => sumOf(c, SYSTEM),
   },
   {
-    id: 'plan', label: '企画力', hint: 'ゼロから形にする', step: 3, cap: 6,
+    id: 'plan', label: '企画力', hint: 'ゼロから形にする', step: 3, cap: 6, shortCap: 4,
     line: 'まだ形のないものを形にする力が見えてきました。',
     direction: { name: 'ゼロから形にする企画型', text: 'まだ形のないものを企画し、立ち上げるところから関わる複業が合っています。' },
     points: c => sumOf(c, PLAN),
   },
   {
-    id: 'voice', label: '発信力', hint: '前に出る・伝える', step: 3, cap: 6,
+    id: 'voice', label: '発信力', hint: '前に出る・伝える', step: 3, cap: 6, shortCap: 5,
     line: '人に伝え、教える力が見えてきました。',
     direction: { name: '前に出て伝える発信型', text: '人前で話す・教える・発信するなど、伝えることが中心の複業が合っています。' },
     points: c => sumOf(c, VOICE),
   },
   {
-    id: 'keep', label: '継続力', hint: '長く続ける', step: 4, cap: 9,
+    id: 'keep', label: '継続力', hint: '長く続ける', step: 4, cap: 9, shortCap: 8.5,
     line: '長く続けて信頼を積む力が見えてきました。',
     direction: { name: '長く寄り添う継続型', text: '1回で終わらず、同じ相手と長く付き合いながら信頼を積む複業が合っています。' },
     // 「継続して伴走したい」に寄るほど点が上がる（いちばん「単発」寄りで 0）
     points: c => sumOf(c, KEEP) + c.slider('q8_3') + 2,
   },
   {
-    id: 'expert', label: '専門性', hint: '経験の深さ', step: 5, cap: 8,
+    id: 'expert', label: '専門性', hint: '経験の深さ', step: 5, cap: 8, shortCap: 6.5,
     line: '本業で深めてきた経験が強みです。',
     direction: { name: '経験を深く活かす専門型', text: '本業で深めた経験や知識を、そのまま別の会社や人のために使う複業が合っています。' },
     // 最後の質問（STEP5）で、本業の中身を具体的に選べたら、経験が深いとみなす。会社相手に寄せたい人も少し足す
@@ -154,6 +160,7 @@ const SHARPNESS = 2
 
 /** 6つの力の点（1〜5）。まだ答えていない設問の分は 0 点として数える（途中経過では、答え終えた力だけを見せる） */
 export function radarScores(answers: Answers): RadarScore[] {
+  const short = questionSetOf(answers) === 'short'
   const deepQ = deepQuestion(answers)
   const deepAnswer = deepQ ? answers[deepQ.id] : undefined
   const c: Ctx = {
@@ -162,7 +169,7 @@ export function radarScores(answers: Answers): RadarScore[] {
     slider: id => (typeof answers[id] === 'number' ? (answers[id] as number) : 0),
   }
   return RADAR_AXES.map(axis => {
-    const ratio = Math.max(0, axis.points(c)) / axis.cap
+    const ratio = Math.max(0, axis.points(c)) / (short ? axis.shortCap : axis.cap)
     const value = Math.min(5, Math.max(1, 1 + Math.round(4 * Math.min(1, ratio) ** SHARPNESS)))
     return { id: axis.id, label: axis.label, value, ratio }
   })

@@ -5,11 +5,13 @@
 // 1. 部品そのものの点検（数・文字数・書き方・書いてはいけない言葉・回答IDの書き間違い）
 // 2. でたらめに作った回答で結果を組み立て、決まりごと（3件・顕在型2/潜在型1・引用・時間の制約・六角形・診断番号）を点検
 // 3. テスト用4人の結果を .persona-results/ に保存し、要点を表示
+// 2・3 は、6問の形と9問の形（src/data/question-set.ts）の両方で確かめる（いまどちらに切り替えてあっても、両方の番号を開けるので）
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { FAMILIES } from '@/data/catalog'
 import type { Family, Job } from '@/data/catalog/types'
-import { activeQuestions, DETAIL_BY_FAMILY, DEEP_BY_DETAIL, JOB_FAMILIES, optionLabel, Q, type Answers } from '@/data/questions'
+import type { QuestionSet } from '@/data/question-set'
+import { activeQuestions, DETAIL_BY_FAMILY, DEEP_BY_DETAIL, JOB_FAMILIES, optionLabel, Q, questionSetOf, type Answers } from '@/data/questions'
 import { validateAnswers } from '@/lib/answers'
 import { diagnose } from '@/lib/diagnose'
 import { RADAR_AXES, radarScores } from '@/lib/radar'
@@ -234,11 +236,11 @@ function random(seed: number) {
 const rnd = random(20261024)
 const pickOne = <T,>(list: T[]) => list[Math.floor(rnd() * list.length)]
 
-function randomAnswers(familyIndex: number): Answers {
+function randomAnswers(familyIndex: number, set: QuestionSet): Answers {
   const a: Answers = { q1: [Q.q1.options[familyIndex].id] }
   // 前の答えで次の設問が決まる（1-2 → STEP5）ので、出てくる設問が増えなくなるまで繰り返す
   for (let round = 0; round < 3; round++) {
-    for (const q of activeQuestions(a)) {
+    for (const q of activeQuestions(a, set)) {
       if (a[q.id] !== undefined) continue
       if (q.kind === 'slider') {
         a[q.id] = pickOne([-2, -1, 0, 1, 2])
@@ -278,6 +280,7 @@ function inspect(r: DiagnosisResult, a: Answers): string[] {
   const kenzai = r.recommendations.filter(x => x.layer === '顕在型').length
   if (kenzai !== 2) issues.push(`顕在型が${kenzai}件（2件のはず）`)
   if (new Set(r.recommendations.map(x => x.job_title)).size !== 3) issues.push('同じ仕事が2回出ている')
+  if (JSON.stringify(r).includes('undefined')) issues.push('結果の文に undefined が入っている')
   const short = (a.q7_2 as string[])[0] === Q.q7_2.options[0].id
   const familyIndex = Q.q1.options.findIndex(o => o.id === (a.q1 as string[])[0])
   /** その人が選んだ回答の言葉（理由の引用は、この中の言葉だけのはず） */
@@ -316,10 +319,16 @@ let built = 0
 if (ready.length > 0) {
   for (let n = 0; n < SAMPLES; n++) {
     const { i } = pickOne(ready)
-    const raw = randomAnswers(i)
+    // 半分ずつ、6問の形と9問の形で答える
+    const set: QuestionSet = n % 2 === 0 ? 'short' : 'full'
+    const raw = randomAnswers(i, set)
     const checked = validateAnswers(raw)
     if (!checked.ok) {
       errors.push(`点検用の回答が通らない: ${checked.error}`)
+      break
+    }
+    if (questionSetOf(checked.value) !== set) {
+      errors.push(`${set === 'short' ? '6問' : '9問'}の形の回答が、別の形として扱われている`)
       break
     }
     let r: DiagnosisResult
@@ -422,14 +431,22 @@ if (personas.length > 0) {
   mkdirSync(OUT, { recursive: true })
   console.log('━━ テスト用の人の結果（全文は .persona-results/）')
 }
-for (const [n, p] of personas.entries()) {
+// 9問の形は A.json〜、6問の形（4・5を抜く）は A-short.json〜 に保存する
+const personaRuns = personas.flatMap((p, n) => {
+  const rest = Object.fromEntries(Object.entries(p.answers).filter(([id]) => id !== 'q4' && id !== 'q5')) as typeof p.answers
+  return [
+    { file: String.fromCharCode(65 + n), name: p.name, answers: p.answers },
+    { file: `${String.fromCharCode(65 + n)}-short`, name: `${p.name}（6問の形）`, answers: rest },
+  ]
+})
+for (const p of personaRuns) {
   const checked = validateAnswers(toIds(p.answers))
   if (!checked.ok) {
     errors.push(`テスト用 ${p.name}: 回答が通らない（${checked.error}）`)
     continue
   }
   const r = diagnose(checked.value)
-  writeFileSync(join(OUT, `${String.fromCharCode(65 + n)}.json`), JSON.stringify({ name: p.name, result: r }, null, 2))
+  writeFileSync(join(OUT, `${p.file}.json`), JSON.stringify({ name: p.name, result: r }, null, 2))
   console.log(`\n${p.name}`)
   console.log(`  二つ名「${r.nickname}」 confidence=${r.confidence}`)
   console.log(`  タグ: ${r.strength_tags.join(' ')}`)

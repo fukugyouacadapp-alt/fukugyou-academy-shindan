@@ -3,9 +3,10 @@
 import { track } from '@vercel/analytics'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
+import { QUESTION_SET } from '@/data/question-set'
 import {
   activeQuestions, deepQuestion, detailQuestion, Q, SLIDERS, STEPS,
-  type Answers, type Question, type StepNo,
+  type Answers, type ChoiceQuestion, type Question, type SliderQuestion, type StepNo,
 } from '@/data/questions'
 import { RadarChart } from '@/components/RadarChart'
 import { preloadReadingLogo } from '@/components/readingLogo'
@@ -15,7 +16,7 @@ import { ChoiceGroup } from './ChoiceGroup'
 import { SliderScale } from './SliderScale'
 
 /**
- * 診断の画面（STEP1〜5。9画面）。1画面に1〜3問。
+ * 診断の画面（STEP1〜5。6問の形は6画面、9問の形は9画面。切り替えは src/data/question-set.ts）。1画面に1〜5問。
  * 回答は変えるたびに sessionStorage へ保存するので、閉じても続きから再開できる。
  * STEP3 を答え終えたら（真ん中あたり）、途中経過（描きかけの六角形と「まだ続きます。あと◯問」）を1画面はさむ
  * （要件定義 R11。途中で終わったと思わせず、続きを見たい気持ちで最後まで答えてもらうため。2026-10-31）。
@@ -26,8 +27,8 @@ type Screen = { step: StepNo; questions: (a: Answers) => Question[] }
 
 const some = (...qs: (Question | null)[]) => qs.filter((q): q is Question => q !== null)
 
-/** 画面の並び（9画面）。1-2「具体的には？」は 1 を選ぶと同じ画面に出る。STEP5 の深掘りは 1-2 の答えで変わる */
-export const SCREENS: Screen[] = [
+/** 9問の形の画面の並び（9画面）。1-2「具体的には？」は 1 を選ぶと同じ画面に出る。STEP5 の深掘りは 1-2 の答えで変わる */
+const FULL_SCREENS: Screen[] = [
   { step: 1, questions: a => some(Q.q1, detailQuestion(a)) },
   { step: 1, questions: () => [Q.q2] },
   { step: 2, questions: () => [Q.q3] },
@@ -38,6 +39,18 @@ export const SCREENS: Screen[] = [
   { step: 4, questions: () => SLIDERS },
   { step: 5, questions: a => some(deepQuestion(a)) },
 ]
+
+/** 6問の形の画面の並び（6画面。2026-11-18）。4・5を聞かず、かなえたいこと・時間と働き方の好みを1つの画面にまとめる */
+const SHORT_SCREENS: Screen[] = [
+  { step: 1, questions: a => some(Q.q1, detailQuestion(a)) },
+  { step: 1, questions: () => [Q.q2] },
+  { step: 2, questions: () => [Q.q3] },
+  { step: 3, questions: () => [Q.q6] },
+  { step: 4, questions: () => [Q.q7_1, Q.q7_2, ...SLIDERS] },
+  { step: 5, questions: a => some(deepQuestion(a)) },
+]
+
+export const SCREENS: Screen[] = QUESTION_SET === 'short' ? SHORT_SCREENS : FULL_SCREENS
 
 /** 答え終えたあとに途中経過をはさむ STEP */
 const CHECKPOINT_STEPS: StepNo[] = [3]
@@ -51,10 +64,13 @@ function isAnswered(q: Question, a: Answers): boolean {
   return q.kind === 'slider' ? typeof v === 'number' : Array.isArray(v) && v.length > 0
 }
 
-/** 前の答えを変えて聞かなくなった設問・選べなくなった選択肢の答えを消す（1 を変えたときの 1-2、1-2 を変えたときの STEP5） */
+/**
+ * 前の答えを変えて聞かなくなった設問・選べなくなった選択肢の答えを消す（1 を変えたときの 1-2、1-2 を変えたときの STEP5）。
+ * 問い方を切り替えた（src/data/question-set.ts）ときに、いまの形で聞かない設問の答えも消す
+ */
 function prune(a: Answers): Answers {
   const out: Answers = {}
-  for (const q of activeQuestions(a)) {
+  for (const q of activeQuestions(a, QUESTION_SET)) {
     const v = a[q.id]
     if (q.kind === 'slider') {
       if (typeof v === 'number') out[q.id] = v
@@ -132,7 +148,9 @@ function QuizInner() {
     // 設問を直す前の回答が残っていたら、今の設問に無い答えは捨てる
     const a = prune(saved)
     const pruned = !sameAnswers(a, saved)
-    const s = normalizeScreen(store.screen() ?? 0, a)
+    // 問い方を切り替えると画面の並びが変わるので、保存していた画面より前に、まだ答えていない画面があればそこから
+    const unanswered = firstUnansweredScreen(a)
+    const s = normalizeScreen(Math.min(store.screen() ?? 0, unanswered ?? Infinity), a)
     return { a, s, pruned, resumed: Object.keys(a).length > 0 && s > 0 }
   })
   const [answers, setAnswers] = useState<Answers>(init.a)
@@ -271,8 +289,15 @@ function QuizInner() {
   const total = visible.length
   const position = visible.indexOf(screen) + 1
   const minutesLeft = Math.max(1, Math.ceil(((total - position) * SECONDS_PER_SCREEN) / 60))
-  /** この画面より後に残っている質問の数（途中経過の「あと◯問」） */
-  const questionsLeft = visible.filter(i => i > screen).reduce((n, i) => n + SCREENS[i].questions(answers).length, 0)
+  /**
+   * この画面より後に残っている質問の数（途中経過の「あと◯問」）。
+   * 6問の形は1画面を1問と数える（かなえたいこと・時間・働き方の好みを1つの画面で聞くが、案内では「6問」と言うので）。
+   * 9問の形は、それまでどおり設問の数で数える
+   */
+  const later = visible.filter(i => i > screen)
+  const questionsLeft = QUESTION_SET === 'short' ? later.length : later.reduce((n, i) => n + SCREENS[i].questions(answers).length, 0)
+  const choices = questions.filter((q): q is ChoiceQuestion => q.kind === 'choice')
+  const sliders = questions.filter((q): q is SliderQuestion => q.kind === 'slider')
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-36">
@@ -318,42 +343,44 @@ function QuizInner() {
 
           <p className="mt-5 text-sm text-sub">{STEPS[step].lead}</p>
 
+          {/* 選ぶ設問を先に、働き方の好み（左右に動かす設問）をあとに並べる。6問の形では1つの画面に両方が出る */}
           <div className="mt-4 flex flex-col gap-9">
-            {questions[0]?.kind === 'slider' ? (
-              <section className="flex flex-col gap-3">
-                <h2 ref={screenHeading} tabIndex={-1} className="text-lg">どちらに近いですか？</h2>
-                {questions.map(q =>
-                  q.kind === 'slider' ? (
-                    <SliderScale key={q.id} q={q} value={answers[q.id] as number | undefined} onChange={v => update(q.id, v)} />
-                  ) : null,
-                )}
+            {choices.map((q, qi) => (
+              <section key={q.id} className="flex flex-col gap-3">
+                <h2
+                  id={`${q.id}-label`}
+                  ref={qi === 0 ? screenHeading : undefined}
+                  tabIndex={qi === 0 ? -1 : undefined}
+                  className="text-lg"
+                >
+                  {q.title}
+                </h2>
+                <p className="-mt-2 text-xs text-sub">{choiceHint(q.max, (answers[q.id] as string[] | undefined)?.length ?? 0)}</p>
+                {q.note && <p className="notice -mt-1 !py-2.5 text-xs">{q.note}</p>}
+                <ChoiceGroup
+                  labelId={`${q.id}-label`}
+                  options={q.options}
+                  max={q.max}
+                  noneId={q.noneId}
+                  value={(answers[q.id] as string[] | undefined) ?? []}
+                  // 選んでも自動では進まない。選び直してから「次へ」で進む
+                  onChange={v => update(q.id, v)}
+                />
               </section>
-            ) : (
-              questions.map((q, qi) =>
-                q.kind === 'choice' ? (
-                  <section key={q.id} className="flex flex-col gap-3">
-                    <h2
-                      id={`${q.id}-label`}
-                      ref={qi === 0 ? screenHeading : undefined}
-                      tabIndex={qi === 0 ? -1 : undefined}
-                      className="text-lg"
-                    >
-                      {q.title}
-                    </h2>
-                    <p className="-mt-2 text-xs text-sub">{choiceHint(q.max, (answers[q.id] as string[] | undefined)?.length ?? 0)}</p>
-                    {q.note && <p className="notice -mt-1 !py-2.5 text-xs">{q.note}</p>}
-                    <ChoiceGroup
-                      labelId={`${q.id}-label`}
-                      options={q.options}
-                      max={q.max}
-                      noneId={q.noneId}
-                      value={(answers[q.id] as string[] | undefined) ?? []}
-                      // 選んでも自動では進まない。選び直してから「次へ」で進む
-                      onChange={v => update(q.id, v)}
-                    />
-                  </section>
-                ) : null,
-              )
+            ))}
+            {sliders.length > 0 && (
+              <section className="flex flex-col gap-3">
+                <h2
+                  ref={choices.length === 0 ? screenHeading : undefined}
+                  tabIndex={choices.length === 0 ? -1 : undefined}
+                  className="text-lg"
+                >
+                  {choices.length === 0 ? 'どちらに近いですか？' : '働き方は、どちらに近いですか？'}
+                </h2>
+                {sliders.map(q => (
+                  <SliderScale key={q.id} q={q} value={answers[q.id] as number | undefined} onChange={v => update(q.id, v)} />
+                ))}
+              </section>
             )}
           </div>
 

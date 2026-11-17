@@ -9,7 +9,12 @@
  * （結果の部品 src/data/catalog/ も、このIDで回答を見ている）。
  * 公開後は、診断の途中だった人の回答がずれないよう、足すときは末尾に足すこと。
  * 「特にない」系は noneLabel で指定すると常に最後に置かれる。
+ *
+ * 2026-11-18 から、聞く設問を6問（4・5を聞かない）と9問で切り替えられる（src/data/question-set.ts）。
+ * 4・5の設問は、9問の形と、9問の形で出した診断番号のために残している。消さないこと
  */
+
+import { QUESTION_SET, type QuestionSet } from './question-set'
 
 export type Option = { id: string; label: string }
 
@@ -42,7 +47,8 @@ export type StepNo = 1 | 2 | 3 | 4 | 5
 export const STEPS: Record<StepNo, { title: string; lead: string }> = {
   1: { title: 'あなたの仕事', lead: 'まずは、いまのお仕事について教えてください。' },
   2: { title: 'あなたの強み', lead: 'まわりから見たあなたを思い浮かべて選んでください。' },
-  3: { title: '相手と経験', lead: '仕事に関係ないことでも大丈夫です。意外な強みのタネになります。' },
+  // 6問の形では「相手」（5）を聞かないので、見出しを変える
+  3: { title: QUESTION_SET === 'short' ? 'あなたの経験' : '相手と経験', lead:'仕事に関係ないことでも大丈夫です。意外な強みのタネになります。' },
   4: { title: 'これからの働き方', lead: '直感で選んでください。' },
   5: { title: '最後に、もう少しだけ', lead: 'お仕事の中身を、もう少しだけ教えてください。提案する仕事がより具体的になります。' },
 }
@@ -285,10 +291,34 @@ export function deepQuestion(answers: Answers): ChoiceQuestion | null {
   return Object.hasOwn(DEEP_BY_DETAIL, picked[0]) ? DEEP_BY_DETAIL[picked[0]] : null
 }
 
-/** いまの回答で聞くべき設問を、画面の順に並べる。1-2 と STEP5 は前の答えで出し分けるので、ここで毎回組み立てる */
-export function activeQuestions(answers: Answers): Question[] {
+/** 6問の形で聞かない設問 */
+const FULL_ONLY: readonly string[] = [q4.id, q5.id]
+
+/**
+ * 回答が、どちらの形で答えたものか。4・5の答えが入っていれば9問の形、なければ6問の形。
+ * いまの切り替え（QUESTION_SET）ではなく回答そのもので決めるので、切り替えたあとも、前の形で出した診断番号の結果をそのまま作り直せる。
+ * （9問の形で答えている途中の回答は6問の形に見えるが、途中の回答は診断の画面と結果画面の「まだ答えていない設問」の確かめで先に止まる）
+ */
+export function questionSetOf(answers: Answers): QuestionSet {
+  return FULL_ONLY.some(id => answers[id] !== undefined) ? 'full' : 'short'
+}
+
+/**
+ * 聞くべき設問を、画面の順に並べる。1-2 と STEP5 は前の答えで出し分けるので、ここで毎回組み立てる。
+ * set を省くと、回答そのものから形を決める（questionSetOf）。診断の画面は、いまの切り替え（QUESTION_SET）を渡す
+ */
+export function activeQuestions(answers: Answers, set: QuestionSet = questionSetOf(answers)): Question[] {
   const list: (Question | null)[] = [q1, detailQuestion(answers), q2, q3, q4, q5, q6, q7_1, q7_2, ...sliders, deepQuestion(answers)]
-  return list.filter((q): q is Question => q !== null)
+  return list.filter((q): q is Question => q !== null && !(set === 'short' && FULL_ONLY.includes(q.id)))
+}
+
+/** 6問の形での番号（講師用のページの回答一覧に出す）。9問の形は、設問に書いてある番号（no）のまま */
+const SHORT_NO: Record<string, string> = { q6: '4', q7_1: '5-1', q7_2: '5-2', q8_1: '5-3', q8_2: '5-4', q8_3: '5-5' }
+
+export function questionNo(q: Question, set: QuestionSet): string {
+  if (set === 'full') return q.no
+  if (q.step === 5) return '6'
+  return SHORT_NO[q.id] ?? q.no
 }
 
 /** IDから選択肢の文言を引く（1-2・STEP5 は全設問から探す） */

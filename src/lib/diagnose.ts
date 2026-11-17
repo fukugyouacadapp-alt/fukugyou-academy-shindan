@@ -67,12 +67,22 @@ const NICK_Q2 = byLabel(Q.q2, {
   'お客様と信頼関係を築く': '信頼を築く',
 })
 
+/** 要約の1文目の「〜な人です」。9問の形は、やる気が出る瞬間（4）から */
 const PERSON_Q4 = byLabel(Q.q4, {
   '人から感謝されたとき': '人の役に立つことを大切にする人',
   '目標を達成したとき': '目標に向かって粘り強く進める人',
   '人が成長したとき': '人の成長を後押しできる人',
   '仕組みがうまく回ったとき': '仕組みで周りを楽にできる人',
   '新しいものが形になったとき': '新しいものを形にするのが好きな人',
+})
+
+/** 6問の形（4を聞かない。2026-11-18）は、いちばん自信がある経験（2）から */
+const PERSON_Q2 = byLabel(Q.q2, {
+  '人を育てる・教える': '人の成長を後押しできる人',
+  'チームをまとめる・引っぱる': '周りを巻き込んで前に進める人',
+  '新しいことを立ち上げる': '新しいものを形にするのが好きな人',
+  '仕組みを整える・効率よくする': '仕組みで周りを楽にできる人',
+  'お客様と信頼関係を築く': '人との信頼を大切にする人',
 })
 
 /** 顕在型のタグが本業のタグと重なってしまったときの代わり */
@@ -158,12 +168,13 @@ export function diagnose(answers: Answers): DiagnosisResult {
 
   const q2 = picks(answers, Q.q2)[0]
   const q3 = picks(answers, Q.q3)
-  const q4 = picks(answers, Q.q4)[0]
+  // 4（やる気が出る瞬間）と5（関わる相手）は、9問の形で答えた人だけにある（src/data/question-set.ts）。6問の形では無いまま組み立てる
+  const q4 = picks(answers, Q.q4)[0] as string | undefined
   const q6 = picks(answers, Q.q6)
   // かなえたいことは2つまで選べる。選んだものの効き目は、どれも足す
   const goals = new Set(picks(answers, Q.q7_1))
   const short = picks(answers, Q.q7_2)[0] === SHORT_TIME
-  const picked = new Set([q2, ...q3, q4, ...picks(answers, Q.q5), ...q6])
+  const picked = new Set([q2, ...q3, ...(q4 ? [q4] : []), ...picks(answers, Q.q5), ...q6])
   const lean = { b2c: sliderValue(answers, 'q8_1'), stage: sliderValue(answers, 'q8_2'), term: sliderValue(answers, 'q8_3') }
 
   function cite(id: string): string {
@@ -239,7 +250,7 @@ export function diagnose(answers: Answers): DiagnosisResult {
         // STEP5 に答えていれば、仕事の内容はその言い回し（「人事では「面接・選考」を担当してきた」）に含まれるので重ねない
         deepClause ?? detailClause,
         cite(q2),
-        cite(q4),
+        q4 ? cite(q4) : null,
       ].filter((c): c is string => !!c),
     )
     const [a, b] = clauses
@@ -291,9 +302,13 @@ export function diagnose(answers: Answers): DiagnosisResult {
         ? `人から「${label(q3[0])}」と頼まれる力と、「${detailLabel}」の仕事で積んだ経験を、両方持っているからです。`
         : `「${label(q2)}」ことへの自信と、「${detailLabel}」の仕事で積んだ経験を、両方持っているからです。`,
     summary: [
-      q3.length > 0
-        ? `人から「${label(q3[0])}」と頼まれることが多く、「${label(q4)}」にやる気が出る、${PERSON_Q4[q4]}です。`
-        : `「${label(q2)}」ことにいちばん自信があり、「${label(q4)}」にやる気が出る、${PERSON_Q4[q4]}です。`,
+      q4
+        ? q3.length > 0
+          ? `人から「${label(q3[0])}」と頼まれることが多く、「${label(q4)}」にやる気が出る、${PERSON_Q4[q4]}です。`
+          : `「${label(q2)}」ことにいちばん自信があり、「${label(q4)}」にやる気が出る、${PERSON_Q4[q4]}です。`
+        : q3.length > 0
+          ? `人から「${label(q3[0])}」と頼まれることが多く、「${label(q2)}」ことにいちばん自信がある、${PERSON_Q2[q2]}です。`
+          : `「${label(q2)}」ことにいちばん自信がある、${PERSON_Q2[q2]}です。`,
       `${deepClause ?? `「${detailLabel}」の仕事で積み上げてきた`}経験は、別の会社や立場でもそのまま活かせます。`,
       experience ? `さらに、${experience}ことも、${EXPERIENCE_VALUE[q6[0]] ?? '複業ではあなただけの武器になります'}。` : '',
     ].join(''),

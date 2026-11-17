@@ -29,7 +29,10 @@ function checkQuestion(q: Question, value: unknown): string | null {
   return null
 }
 
-/** いま聞くべき設問すべてに、正しい形で答えているか。通れば、聞いた設問の分だけを取り出して返す */
+/**
+ * 聞くべき設問すべてに、正しい形で答えているか。通れば、聞いた設問の分だけを取り出して返す。
+ * 6問の形か9問の形かは、回答そのものから決める（questionSetOf。問い方を切り替えたあとも、前の形の回答を確かめられるように）
+ */
 export function validateAnswers(raw: unknown): Result<Answers> {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return { ok: false, error: '回答の形が正しくありません' }
   const input = raw as Answers
